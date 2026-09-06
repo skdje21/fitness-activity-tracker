@@ -1,0 +1,49 @@
+@baseUrl = http://localhost:3000
+
+### 1. Список всех записей активности
+GET {{baseUrl}}/activities
+
+### 2. Фильтр по дате (query string)
+GET {{baseUrl}}/activities?date=2026-09-05
+
+### 3. Одна запись по id
+GET {{baseUrl}}/activities/1
+
+### 4. Запись не найдена (404)
+GET {{baseUrl}}/activities/999
+
+### 5. Создание записи (201)
+POST {{baseUrl}}/activities
+Content-Type: application/json
+
+{
+  "date": "2026-09-07",
+  "steps": 10400,
+  "calories": 510
+}
+
+### 6. Неверные данные (400)
+POST {{baseUrl}}/activities
+Content-Type: application/json
+
+{
+  "date": "2026-09-07",
+  "steps": -10,
+  "calories": 200
+}
+
+### 7. Полное обновление (PUT)
+PUT {{baseUrl}}/activities/1
+Content-Type: application/json
+
+{
+  "date": "2026-09-05",
+  "steps": 9000,
+  "calories": 450
+}
+
+### 8. Удаление записи
+DELETE {{baseUrl}}/activities/2
+
+### 9. Повторное удаление той же записи (404)
+DELETE {{baseUrl}}/activities/2
