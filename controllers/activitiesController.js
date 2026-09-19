@@ -1,11 +1,11 @@
-const Activity = require('../models/activity');
+const { Activity } = require('../models');
 
 function parseId(req) {
     return Number(req.params.id);
 }
 
 function validatePayload(body) {
-    const { date, steps, calories } = body;
+    const { date, steps, calories, duration } = body;
 
     if (!date || typeof date !== 'string') {
         return 'Поле "date" обязательно и должно быть строкой (YYYY-MM-DD)';
@@ -16,67 +16,84 @@ function validatePayload(body) {
     if (!Number.isFinite(calories) || calories < 0) {
         return 'Поле "calories" обязательно и должно быть неотрицательным числом';
     }
+    if (duration !== undefined && duration !== null && (!Number.isInteger(duration) || duration < 0)) {
+        return 'Поле "duration" должно быть целым неотрицательным числом (минуты)';
+    }
 
     return null;
 }
 
-// GET /activities — список всех записей, опционально ?date=YYYY-MM-DD
-function getActivities(req, res) {
-    const { date } = req.query;
-    const items = Activity.getAll();
-
-    if (date !== undefined) {
-        return res.status(200).json(items.filter((activity) => activity.date === date));
+async function getActivities(req, res, next) {
+    try {
+        const { date } = req.query;
+        const where = date === undefined ? {} : { date };
+        const activities = await Activity.findAll({ where });
+        res.status(200).json(activities);
+    } catch (error) {
+        next(error);
     }
-
-    res.status(200).json(items);
 }
 
-// GET /activities/:id
-function getActivityById(req, res) {
-    const activity = Activity.findById(parseId(req));
-    if (!activity) {
-        return res.status(404).json({ error: 'Запись активности не найдена' });
+
+async function getActivityById(req, res, next) {
+    try {
+        const activity = await Activity.findByPk(parseId(req));
+        if (!activity) {
+            return res.status(404).json({ error: 'Запись активности не найдена' });
+        }
+        res.status(200).json(activity);
+    } catch (error) {
+        next(error);
     }
-    res.status(200).json(activity);
 }
 
-// POST /activities
-function createActivity(req, res) {
-    const error = validatePayload(req.body);
-    if (error) {
-        return res.status(400).json({ error });
-    }
 
-    const { date, steps, calories } = req.body;
-    const created = Activity.create({ date, steps, calories });
-    res.status(201).json(created);
+async function createActivity(req, res, next) {
+    try {
+        const error = validatePayload(req.body);
+        if (error) {
+            return res.status(400).json({ error });
+        }
+
+        const { date, steps, calories, duration } = req.body;
+        const created = await Activity.create({ date, steps, calories, duration });
+        res.status(201).json(created);
+    } catch (error) {
+        next(error);
+    }
 }
 
-// PUT /activities/:id — полное обновление
-function updateActivity(req, res) {
+
+async function updateActivity(req, res, next) {
     const id = parseId(req);
-    if (!Activity.findById(id)) {
-        return res.status(404).json({ error: 'Запись активности не найдена' });
-    }
+    try {
+        const error = validatePayload(req.body);
+        if (error) {
+            return res.status(400).json({ error });
+        }
 
-    const error = validatePayload(req.body);
-    if (error) {
-        return res.status(400).json({ error });
-    }
+        const [updatedCount] = await Activity.update(req.body, { where: { id } });
+        if (updatedCount === 0) {
+            return res.status(404).json({ error: 'Запись активности не найдена' });
+        }
 
-    const { date, steps, calories } = req.body;
-    const updated = Activity.update(id, { date, steps, calories });
-    res.status(200).json(updated);
+        const updated = await Activity.findByPk(id);
+        res.status(200).json(updated);
+    } catch (error) {
+        next(error);
+    }
 }
 
-// DELETE /activities/:id
-function deleteActivity(req, res) {
-    const removed = Activity.remove(parseId(req));
-    if (!removed) {
-        return res.status(404).json({ error: 'Запись активности не найдена' });
+async function deleteActivity(req, res, next) {
+    try {
+        const deletedCount = await Activity.destroy({ where: { id: parseId(req) } });
+        if (deletedCount === 0) {
+            return res.status(404).json({ error: 'Запись активности не найдена' });
+        }
+        res.status(200).json({ message: 'Запись активности удалена' });
+    } catch (error) {
+        next(error);
     }
-    res.status(200).json({ message: 'Запись активности удалена' });
 }
 
 module.exports = {
