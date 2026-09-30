@@ -1,4 +1,6 @@
+require('dotenv').config();
 const express = require('express');
+const authRouter = require('./routes/auth');
 const activitiesRouter = require('./routes/activities');
 
 const app = express();
@@ -6,6 +8,7 @@ const PORT = 3000;
 
 
 app.use(express.json());
+
 
 app.get('/', (req, res) => {
     res.json({
@@ -15,7 +18,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/activities', activitiesRouter); 
-
+app.use('/auth', authRouter);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Маршрут не найден' });

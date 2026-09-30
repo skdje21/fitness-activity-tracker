@@ -1,4 +1,4 @@
-const { Activity } = require('../models');
+const { Activity, Sequelize } = require('../models');
 
 function parseId(req) {
     return Number(req.params.id);
@@ -26,7 +26,7 @@ function validatePayload(body) {
 async function getActivities(req, res, next) {
     try {
         const { date } = req.query;
-        const where = date === undefined ? {} : { date };
+        const where = date === undefined ? {} : Sequelize.where(Sequelize.fn('DATE', Sequelize.col('date')), date);
         const activities = await Activity.findAll({ where });
         res.status(200).json(activities);
     } catch (error) {
