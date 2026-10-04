@@ -18,4 +18,4 @@ function authMiddleware(req, res, next) {
     }
 }
 
-module.exports = authMiddleware; //конец
+module.exports = authMiddleware; //конец 123

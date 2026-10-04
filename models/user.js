@@ -1,7 +1,5 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     /**
@@ -22,6 +20,15 @@ module.exports = (sequelize, DataTypes) => {
     passwordHash: {
         type: DataTypes.STRING,
         allowNull: false,
+    },
+    failedLoginAttempts: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
+    lockUntil: {
+        type: DataTypes.DATE,
+        allowNull: true,
     },
 }, {
     sequelize,
