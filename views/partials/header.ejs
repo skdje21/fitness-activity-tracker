@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> — Fitness Activity Tracker</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="site-header">
+    <h1>Fitness Activity Tracker</h1>
+    <nav>
+        <a href="/">Главная</a>
+        <a href="/add?auth=1">Добавить запись</a>
+    </nav>
+    <p class="user">Пользователь: <strong><%= user.name %></strong></p>
+</header>
+<main>

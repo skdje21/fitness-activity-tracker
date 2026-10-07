@@ -1,0 +1,32 @@
+<%- include('partials/header') %>
+
+<h2>Список активностей</h2>
+
+<% if (activities.length === 0) { %>
+    <p>Записей пока нет. <a href="/add?auth=1">Добавить первую</a></p>
+<% } else { %>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Дата</th>
+                <th>Шаги</th>
+                <th>Калории</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <% activities.forEach(function (activity) { %>
+                <tr>
+                    <td><%= activity.id %></td>
+                    <td><%= activity.date %></td>
+                    <td><%= activity.steps %></td>
+                    <td><%= activity.calories %></td>
+                    <td><a href="/item/<%= activity.id %>">Подробнее</a></td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+<% } %>
+
+<%- include('partials/footer') %>
