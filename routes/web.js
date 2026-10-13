@@ -1,15 +1,17 @@
 const express = require('express');
-const Activity = require('../models/activity');
+const { PzActivity } = require('../models/pzActivity');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
 
-// GET / — главная: список активностей
-router.get('/', (req, res) => {
-    res.render('index', {
-        title: 'Список активностей',
-        activities: Activity.getAll()
-    });
+// GET / — главная: список активностей из БД
+router.get('/', async (req, res, next) => {
+    try {
+        const activities = await PzActivity.findAll({ order: [['id', 'ASC']] });
+        res.render('index', { title: 'Список активностей', activities });
+    } catch (err) {
+        next(err);
+    }
 });
 
 // GET /login — страница для неавторизованных
@@ -22,32 +24,38 @@ router.get('/add', requireAuth, (req, res) => {
     res.render('add', { title: 'Добавить активность', error: null });
 });
 
-// POST /add — добавление записи в массив
-router.post('/add', requireAuth, (req, res) => {
-    const date = req.body.date;
-    const steps = Number(req.body.steps);
-    const calories = Number(req.body.calories);
+// POST /add — добавление записи в БД
+router.post('/add', requireAuth, async (req, res, next) => {
+    try {
+        const date = req.body.date;
+        const steps = Number(req.body.steps);
+        const calories = Number(req.body.calories);
 
-    if (!date || !Number.isInteger(steps) || steps < 0 || !Number.isFinite(calories) || calories < 0) {
-        return res.status(400).render('add', {
-            title: 'Добавить активность',
-            error: 'Заполните все поля корректно: дата, шаги и калории должны быть неотрицательными числами'
-        });
+        if (!date || !Number.isInteger(steps) || steps < 0 || !Number.isFinite(calories) || calories < 0) {
+            return res.status(400).render('add', {
+                title: 'Добавить активность',
+                error: 'Заполните все поля корректно: дата, шаги и калории должны быть неотрицательными числами'
+            });
+        }
+
+        await PzActivity.create({ date, steps, calories });
+        res.redirect('/?auth=1');
+    } catch (err) {
+        next(err);
     }
-
-    Activity.create({ date, steps, calories });
-    res.redirect('/?auth=1');
 });
 
-// GET /item/:id — детальная страница
-router.get('/item/:id', (req, res, next) => {
-    const activity = Activity.findById(Number(req.params.id));
-
-    if (!activity) {
-        return next(); // передаём управление дальше — попадём в 404-middleware
+// GET /item/:id — детальная страница из БД
+router.get('/item/:id', async (req, res, next) => {
+    try {
+        const activity = await PzActivity.findByPk(Number(req.params.id));
+        if (!activity) {
+            return next(); // передаём управление дальше — попадём в 404-middleware
+        }
+        res.render('item', { title: `Активность №${activity.id}`, activity });
+    } catch (err) {
+        next(err);
     }
-
-    res.render('item', { title: `Активность №${activity.id}`, activity });
 });
 
 // GET /boom — демонстрация обработчика ошибок 500

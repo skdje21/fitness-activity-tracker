@@ -5,6 +5,7 @@ const activitiesRouter = require('./routes/activities');
 const webRouter = require('./routes/web');
 const logger = require('./middleware/logger');
 const fakeAuth = require('./middleware/fakeAuth');
+const { sequelize, PzActivity } = require('./models/pzActivity');
 
 const app = express();
 const PORT = 3000;
@@ -43,6 +44,29 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`Сервер запущен: http://localhost:${PORT}`);
-});
+// Создаём таблицу PzActivities (если её нет) и запускаем сервер
+async function start() {
+    try {
+        await sequelize.authenticate();           // проверка подключения к БД
+        await sequelize.sync();                    // создание таблицы, если отсутствует
+
+        // Наполняем таблицу тестовыми данными только при первом запуске (если пустая)
+        const count = await PzActivity.count();
+        if (count === 0) {
+            await PzActivity.bulkCreate([
+                { date: '2026-09-05', steps: 8200, calories: 420 },
+                { date: '2026-09-06', steps: 6100, calories: 315 },
+            ]);
+            console.log('Таблица PzActivities наполнена тестовыми записями');
+        }
+
+        app.listen(PORT, () => {
+            console.log(`Сервер запущен: http://localhost:${PORT}`);
+        });
+    } catch (err) {
+        console.error('Не удалось подключиться к базе данных:', err.message);
+        process.exit(1);
+    }
+}
+
+start();

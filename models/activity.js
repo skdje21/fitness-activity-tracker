@@ -3,9 +3,11 @@
 
 let activities = [
     { id: 1, date: '2026-09-05', steps: 8200, calories: 420 },
-    { id: 2, date: '2026-09-06', steps: 6100, calories: 315 }
+    { id: 2, date: '2026-09-06', steps: 6100, calories: 315 },
+    { id: 3, date: '2026-10-02', steps: 4300, calories: 230 },
+    { id: 4, date: '2026-10-06', steps: 1220, calories: 625 }
 ];
-let nextId = 3;
+let nextId = 5;
 
 function getAll() {
     return activities;
