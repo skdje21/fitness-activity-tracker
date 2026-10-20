@@ -36,6 +36,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Activity.init({
     date: DataTypes.DATE,
+    type: DataTypes.STRING,
     steps: DataTypes.INTEGER,
     calories: DataTypes.FLOAT,
     duration: DataTypes.INTEGER

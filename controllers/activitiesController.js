@@ -25,8 +25,24 @@ function validatePayload(body) {
 
 async function getActivities(req, res, next) {
     try {
-        const { date } = req.query;
-        const where = date === undefined ? {} : Sequelize.where(Sequelize.fn('DATE', Sequelize.col('date')), date);
+        const { date, search } = req.query;
+
+        // Собираем условия фильтрации в массив, затем объединяем через AND.
+        const conditions = [];
+
+        // Фильтр по дате (как было раньше): сравниваем только дату без времени.
+        if (date !== undefined) {
+            conditions.push(Sequelize.where(Sequelize.fn('DATE', Sequelize.col('date')), date));
+        }
+
+        // Поиск по типу активности: регистронезависимое частичное совпадение (ILIKE).
+        if (search) {
+            conditions.push({ type: { [Sequelize.Op.iLike]: `%${search}%` } });
+        }
+
+        // Если условий нет — пустой where (вернём все записи).
+        const where = conditions.length ? { [Sequelize.Op.and]: conditions } : {};
+
         const activities = await Activity.findAll({ where });
         res.status(200).json(activities);
     } catch (error) {
@@ -55,8 +71,8 @@ async function createActivity(req, res, next) {
             return res.status(400).json({ error });
         }
 
-        const { date, steps, calories, duration } = req.body;
-        const created = await Activity.create({ date, steps, calories, duration });
+        const { date, type, steps, calories, duration } = req.body;
+        const created = await Activity.create({ date, type, steps, calories, duration });
         res.status(201).json(created);
     } catch (error) {
         next(error);

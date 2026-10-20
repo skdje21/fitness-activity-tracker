@@ -395,3 +395,46 @@
 @keyframes pop {
     from { transform: scale(.94); opacity: 0; }
 }
+
+/* ---------- Экран ошибки загрузки ---------- */
+.error-screen {
+    text-align: center;
+    margin-top: 100px;
+    color: var(--muted);
+}
+
+.error-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.error-screen h2 {
+    margin: 0 0 8px;
+    color: var(--text);
+}
+
+.error-screen p {
+    margin: 0 0 20px;
+    font-size: 14px;
+}
+
+/* ---------- Всплывающее уведомление (toast) ---------- */
+.notice {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--danger);
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    z-index: 200;
+    animation: slideUp .2s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translate(-50%, 16px); opacity: 0; }
+}

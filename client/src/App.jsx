@@ -1,65 +1,100 @@
 import { useState, useEffect } from 'react';
-import useLocalStorage from './hooks/useLocalStorage';
+import { fetchActivities, addActivity, updateActivity, deleteActivity } from './api';
 import './App.css';
 
-// === Шаг 1. Форма данных: { id, date, type, steps, calories } ===
-const INITIAL = [
-    { id: 1, date: '2026-10-01', type: 'Бег', steps: 8200, calories: 420 },
-    { id: 2, date: '2026-10-02', type: 'Ходьба', steps: 6100, calories: 315 },
-];
-
 function App() {
-    // === Шаг 5. Массив хранится в localStorage ===
-    const [activities, setActivities] = useLocalStorage('activities', INITIAL);
+    // === Основные данные и состояния загрузки/ошибки (Часть 3) ===
+    const [activities, setActivities] = useState([]);
+    const [loading, setLoading] = useState(true);   // индикатор первой загрузки
+    const [error, setError] = useState(null);       // ошибка загрузки списка
+    const [notice, setNotice] = useState(null);     // всплывающее уведомление об ошибке операции
 
-    // === Шаг 2. Состояние формы и управления ===
+    // Поля формы
     const [date, setDate] = useState('');
     const [type, setType] = useState('');
     const [steps, setSteps] = useState('');
     const [calories, setCalories] = useState('');
     const [editId, setEditId] = useState(null);
+
+    // Поиск и сортировка
     const [search, setSearch] = useState('');
     const [sortBy, setSortBy] = useState('date');
-    const [deleteId, setDeleteId] = useState(null); // id записи, ожидающей подтверждения удаления
 
-    // === Шаг 7.2. Имитация загрузки с сервера (1 сек) ===
-    const [loading, setLoading] = useState(true);
+    // id записи, ожидающей подтверждения удаления
+    const [deleteId, setDeleteId] = useState(null);
+
+    // === Загрузка данных с сервера ===
+    async function loadData(searchTerm = '') {
+        try {
+            setError(null);
+            const res = await fetchActivities(searchTerm);
+            setActivities(res.data);
+        } catch (e) {
+            setError('Не удалось загрузить данные. Проверьте, запущен ли сервер.');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // === Часть 3 + Часть 5: первая загрузка + поиск на сервере с debounce ===
+    // Эффект срабатывает при монтировании (search='') и при каждом изменении search.
+    // setTimeout + очистка в return = debounce: запрос уходит через 400 мс после паузы в наборе.
     useEffect(() => {
-        const timer = setTimeout(() => setLoading(false), 1000);
+        const timer = setTimeout(() => loadData(search), 400);
         return () => clearTimeout(timer);
-    }, []);
+    }, [search]);
 
-    // === Шаг 7.1. Заголовок вкладки = количество записей ===
+    // Заголовок вкладки = количество записей
     useEffect(() => {
         document.title = `Активности (${activities.length})`;
     }, [activities]);
+
+    // Автоскрытие уведомления через 3 секунды
+    useEffect(() => {
+        if (!notice) return;
+        const timer = setTimeout(() => setNotice(null), 3000);
+        return () => clearTimeout(timer);
+    }, [notice]);
 
     function resetForm() {
         setDate(''); setType(''); setSteps(''); setCalories(''); setEditId(null);
     }
 
-    // === Шаг 3. CRUD ===
-    function handleSubmit(e) {
+    // === Часть 4: CRUD с оптимистичным обновлением ===
+    async function handleSubmit(e) {
         e.preventDefault();
         if (!date || !type || steps === '' || calories === '') return;
 
+        const payload = { date, type, steps: Number(steps), calories: Number(calories) };
+
         if (editId === null) {
-            const newItem = {
-                id: Date.now(),
-                date,
-                type,
-                steps: Number(steps),
-                calories: Number(calories),
-            };
-            setActivities(prev => [...prev, newItem]);
+            // --- ДОБАВЛЕНИЕ ---
+            const tempId = Date.now();
+            const optimistic = { id: tempId, ...payload };
+            setActivities(prev => [...prev, optimistic]); // 1) сразу показываем в списке
+            resetForm();
+            try {
+                const res = await addActivity(payload);                 // 2) POST на сервер
+                setActivities(prev => prev.map(a => a.id === tempId ? res.data : a)); // 3) меняем временный id на реальный
+            } catch (err) {
+                setActivities(prev => prev.filter(a => a.id !== tempId)); // 4) при ошибке убираем элемент
+                setNotice('Не удалось добавить запись');
+            }
         } else {
-            setActivities(prev => prev.map(a =>
-                a.id === editId
-                    ? { ...a, date, type, steps: Number(steps), calories: Number(calories) }
-                    : a
-            ));
+            // --- РЕДАКТИРОВАНИЕ ---
+            const id = editId;
+            const prevItem = activities.find(a => a.id === id);          // запоминаем для отката
+            const updatedItem = { ...prevItem, ...payload };
+            setActivities(prev => prev.map(a => a.id === id ? updatedItem : a)); // 1) оптимистично обновляем
+            resetForm();
+            try {
+                const res = await updateActivity(id, payload);          // 2) PUT на сервер
+                setActivities(prev => prev.map(a => a.id === id ? res.data : a)); // 3) синхронизируем с ответом
+            } catch (err) {
+                setActivities(prev => prev.map(a => a.id === id ? prevItem : a)); // 4) откат при ошибке
+                setNotice('Не удалось обновить запись');
+            }
         }
-        resetForm();
     }
 
     function handleEdit(a) {
@@ -70,46 +105,67 @@ function App() {
         setCalories(String(a.calories));
     }
 
-    // Delete — открываем модальное окно подтверждения
     function handleDelete(id) {
         setDeleteId(id);
     }
 
-    // Подтверждение удаления в модальном окне
-    function confirmDelete() {
-        setActivities(prev => prev.filter(a => a.id !== deleteId));
-        if (editId === deleteId) resetForm();
+    // --- УДАЛЕНИЕ (оптимистичное) ---
+    async function confirmDelete() {
+        const id = deleteId;
+        const prevItem = activities.find(a => a.id === id); // запоминаем для возврата
+        setActivities(prev => prev.filter(a => a.id !== id)); // 1) сразу убираем из списка
+        if (editId === id) resetForm();
         setDeleteId(null);
+        try {
+            await deleteActivity(id);                          // 2) DELETE на сервер
+        } catch (err) {
+            setActivities(prev => [...prev, prevItem]);         // 3) при ошибке возвращаем обратно
+            setNotice('Не удалось удалить запись');
+        }
     }
 
     function cancelDelete() {
         setDeleteId(null);
     }
 
-    // === Шаг 6. Производный список: фильтр + сортировка ===
-    const visible = activities
-        .filter(a => a.type.toLowerCase().includes(search.toLowerCase()))
-        .sort((a, b) => {
-            if (sortBy === 'date') return a.date.localeCompare(b.date);
-            if (sortBy === 'steps') return b.steps - a.steps;
-            if (sortBy === 'calories') return b.calories - a.calories;
-            return 0;
-        });
+    // Сортировка на клиенте (поиск выполняется на сервере)
+    const visible = [...activities].sort((a, b) => {
+        if (sortBy === 'date') return a.date.localeCompare(b.date);
+        if (sortBy === 'steps') return b.steps - a.steps;
+        if (sortBy === 'calories') return b.calories - a.calories;
+        return 0;
+    });
 
-    // === Шаг 7.4. Статистика ===
+    // Статистика
     const totalSteps = activities.reduce((sum, a) => sum + a.steps, 0);
     const totalCalories = activities.reduce((sum, a) => sum + a.calories, 0);
 
-    // Запись, ожидающая подтверждения удаления (для модального окна)
+    // Запись, ожидающая подтверждения удаления
     const pendingItem = activities.find(a => a.id === deleteId);
 
-    // === Шаг 7.2. Экран загрузки ===
+    // === Экран загрузки (Часть 3) ===
     if (loading) {
         return (
             <div className="app">
                 <div className="loader">
                     <div className="spinner"></div>
                     <p>Загрузка данных…</p>
+                </div>
+            </div>
+        );
+    }
+
+    // === Экран ошибки с кнопкой «Повторить» (Часть 3) ===
+    if (error) {
+        return (
+            <div className="app">
+                <div className="error-screen">
+                    <div className="error-icon">⚠️</div>
+                    <h2>Ошибка</h2>
+                    <p>{error}</p>
+                    <button className="btn btn-primary" onClick={() => { setLoading(true); loadData(search); }}>
+                        Повторить
+                    </button>
                 </div>
             </div>
         );
@@ -125,7 +181,7 @@ function App() {
                 </div>
             </header>
 
-            {/* Статистика (Шаг 7.4) */}
+            {/* Статистика */}
             <section className="stats">
                 <div className="stat-card">
                     <span className="stat-value">{activities.length}</span>
@@ -141,7 +197,7 @@ function App() {
                 </div>
             </section>
 
-            {/* Форма (Шаги 3, 4) */}
+            {/* Форма */}
             <section className={'card form-card ' + (editId !== null ? 'editing' : '')}>
                 <h2>{editId === null ? 'Новая запись' : 'Редактирование записи'}</h2>
                 <form className="form" onSubmit={handleSubmit}>
@@ -172,7 +228,7 @@ function App() {
                 </form>
             </section>
 
-            {/* Список (Шаг 6 + Read) */}
+            {/* Список */}
             <section className="card">
                 <div className="controls">
                     <div className="search">
@@ -223,7 +279,7 @@ function App() {
                 )}
             </section>
 
-            <footer className="footer">Лабораторная работа №4 · React · localStorage</footer>
+            <footer className="footer">Лабораторная работа №5 · React · REST API</footer>
 
             {/* Модальное окно подтверждения удаления */}
             {deleteId !== null && (
@@ -240,6 +296,11 @@ function App() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Всплывающее уведомление об ошибке операции */}
+            {notice && (
+                <div className="notice">{notice}</div>
             )}
         </div>
     );

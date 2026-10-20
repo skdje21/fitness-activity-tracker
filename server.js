@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const authRouter = require('./routes/auth');
 const activitiesRouter = require('./routes/activities');
 
@@ -7,6 +8,7 @@ const app = express();
 const PORT = 3000;
 
 
+app.use(cors()); // разрешаем запросы с другого порта (React на :5173)
 app.use(express.json());
 
 
