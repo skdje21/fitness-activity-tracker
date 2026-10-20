@@ -27,20 +27,16 @@ async function getActivities(req, res, next) {
     try {
         const { date, search } = req.query;
 
-        // Собираем условия фильтрации в массив, затем объединяем через AND.
         const conditions = [];
 
-        // Фильтр по дате (как было раньше): сравниваем только дату без времени.
         if (date !== undefined) {
             conditions.push(Sequelize.where(Sequelize.fn('DATE', Sequelize.col('date')), date));
         }
 
-        // Поиск по типу активности: регистронезависимое частичное совпадение (ILIKE).
         if (search) {
             conditions.push({ type: { [Sequelize.Op.iLike]: `%${search}%` } });
         }
 
-        // Если условий нет — пустой where (вернём все записи).
         const where = conditions.length ? { [Sequelize.Op.and]: conditions } : {};
 
         const activities = await Activity.findAll({ where });

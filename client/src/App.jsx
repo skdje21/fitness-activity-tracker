@@ -3,27 +3,23 @@ import { fetchActivities, addActivity, updateActivity, deleteActivity } from './
 import './App.css';
 
 function App() {
-    // === Основные данные и состояния загрузки/ошибки (Часть 3) ===
-    const [activities, setActivities] = useState([]);
-    const [loading, setLoading] = useState(true);   // индикатор первой загрузки
-    const [error, setError] = useState(null);       // ошибка загрузки списка
-    const [notice, setNotice] = useState(null);     // всплывающее уведомление об ошибке операции
 
-    // Поля формы
+    const [activities, setActivities] = useState([]);
+    const [loading, setLoading] = useState(true);  
+    const [error, setError] = useState(null);     
+    const [notice, setNotice] = useState(null);     
+
     const [date, setDate] = useState('');
     const [type, setType] = useState('');
     const [steps, setSteps] = useState('');
     const [calories, setCalories] = useState('');
     const [editId, setEditId] = useState(null);
 
-    // Поиск и сортировка
     const [search, setSearch] = useState('');
     const [sortBy, setSortBy] = useState('date');
 
-    // id записи, ожидающей подтверждения удаления
     const [deleteId, setDeleteId] = useState(null);
 
-    // === Загрузка данных с сервера ===
     async function loadData(searchTerm = '') {
         try {
             setError(null);
@@ -36,20 +32,16 @@ function App() {
         }
     }
 
-    // === Часть 3 + Часть 5: первая загрузка + поиск на сервере с debounce ===
-    // Эффект срабатывает при монтировании (search='') и при каждом изменении search.
-    // setTimeout + очистка в return = debounce: запрос уходит через 400 мс после паузы в наборе.
     useEffect(() => {
         const timer = setTimeout(() => loadData(search), 400);
         return () => clearTimeout(timer);
     }, [search]);
 
-    // Заголовок вкладки = количество записей
     useEffect(() => {
         document.title = `Активности (${activities.length})`;
     }, [activities]);
 
-    // Автоскрытие уведомления через 3 секунды
+
     useEffect(() => {
         if (!notice) return;
         const timer = setTimeout(() => setNotice(null), 3000);
@@ -60,7 +52,7 @@ function App() {
         setDate(''); setType(''); setSteps(''); setCalories(''); setEditId(null);
     }
 
-    // === Часть 4: CRUD с оптимистичным обновлением ===
+    
     async function handleSubmit(e) {
         e.preventDefault();
         if (!date || !type || steps === '' || calories === '') return;
@@ -68,28 +60,28 @@ function App() {
         const payload = { date, type, steps: Number(steps), calories: Number(calories) };
 
         if (editId === null) {
-            // --- ДОБАВЛЕНИЕ ---
+
             const tempId = Date.now();
             const optimistic = { id: tempId, ...payload };
-            setActivities(prev => [...prev, optimistic]); // 1) сразу показываем в списке
+            setActivities(prev => [...prev, optimistic]); 
             resetForm();
             try {
-                const res = await addActivity(payload);                 // 2) POST на сервер
-                setActivities(prev => prev.map(a => a.id === tempId ? res.data : a)); // 3) меняем временный id на реальный
+                const res = await addActivity(payload);                
+                setActivities(prev => prev.map(a => a.id === tempId ? res.data : a));
             } catch (err) {
-                setActivities(prev => prev.filter(a => a.id !== tempId)); // 4) при ошибке убираем элемент
+                setActivities(prev => prev.filter(a => a.id !== tempId)); 
                 setNotice('Не удалось добавить запись');
             }
         } else {
-            // --- РЕДАКТИРОВАНИЕ ---
+
             const id = editId;
-            const prevItem = activities.find(a => a.id === id);          // запоминаем для отката
+            const prevItem = activities.find(a => a.id === id);        
             const updatedItem = { ...prevItem, ...payload };
-            setActivities(prev => prev.map(a => a.id === id ? updatedItem : a)); // 1) оптимистично обновляем
+            setActivities(prev => prev.map(a => a.id === id ? updatedItem : a)); 
             resetForm();
             try {
-                const res = await updateActivity(id, payload);          // 2) PUT на сервер
-                setActivities(prev => prev.map(a => a.id === id ? res.data : a)); // 3) синхронизируем с ответом
+                const res = await updateActivity(id, payload);         
+                setActivities(prev => prev.map(a => a.id === id ? res.data : a)); 
             } catch (err) {
                 setActivities(prev => prev.map(a => a.id === id ? prevItem : a)); // 4) откат при ошибке
                 setNotice('Не удалось обновить запись');
@@ -109,17 +101,17 @@ function App() {
         setDeleteId(id);
     }
 
-    // --- УДАЛЕНИЕ (оптимистичное) ---
+
     async function confirmDelete() {
         const id = deleteId;
-        const prevItem = activities.find(a => a.id === id); // запоминаем для возврата
-        setActivities(prev => prev.filter(a => a.id !== id)); // 1) сразу убираем из списка
+        const prevItem = activities.find(a => a.id === id); 
+        setActivities(prev => prev.filter(a => a.id !== id)); 
         if (editId === id) resetForm();
         setDeleteId(null);
         try {
-            await deleteActivity(id);                          // 2) DELETE на сервер
+            await deleteActivity(id);                          
         } catch (err) {
-            setActivities(prev => [...prev, prevItem]);         // 3) при ошибке возвращаем обратно
+            setActivities(prev => [...prev, prevItem]);        
             setNotice('Не удалось удалить запись');
         }
     }
@@ -128,7 +120,6 @@ function App() {
         setDeleteId(null);
     }
 
-    // Сортировка на клиенте (поиск выполняется на сервере)
     const visible = [...activities].sort((a, b) => {
         if (sortBy === 'date') return a.date.localeCompare(b.date);
         if (sortBy === 'steps') return b.steps - a.steps;
@@ -136,14 +127,12 @@ function App() {
         return 0;
     });
 
-    // Статистика
+
     const totalSteps = activities.reduce((sum, a) => sum + a.steps, 0);
     const totalCalories = activities.reduce((sum, a) => sum + a.calories, 0);
 
-    // Запись, ожидающая подтверждения удаления
     const pendingItem = activities.find(a => a.id === deleteId);
 
-    // === Экран загрузки (Часть 3) ===
     if (loading) {
         return (
             <div className="app">
@@ -155,7 +144,6 @@ function App() {
         );
     }
 
-    // === Экран ошибки с кнопкой «Повторить» (Часть 3) ===
     if (error) {
         return (
             <div className="app">
@@ -279,7 +267,7 @@ function App() {
                 )}
             </section>
 
-            <footer className="footer">Лабораторная работа №5 · React · REST API</footer>
+            <footer className="footer"></footer>
 
             {/* Модальное окно подтверждения удаления */}
             {deleteId !== null && (
