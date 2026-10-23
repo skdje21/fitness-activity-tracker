@@ -6,6 +6,7 @@
     <li><span>Дата:</span> <%= activity.date %></li>
     <li><span>Шаги:</span> <%= activity.steps %></li>
     <li><span>Калории:</span> <%= activity.calories %></li>
+    <li><span>Создано:</span> <%= activity.createdAt ? new Date(activity.createdAt).toLocaleString('ru-RU') : '—' %></li>
 </ul>
 
 <p><a href="/">← Назад к списку</a></p>

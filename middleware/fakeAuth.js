@@ -6,7 +6,6 @@ function fakeAuth(req, res, next) {
         req.user = { name: 'Гость', role: 'guest' };
     }
 
-    // res.locals доступен внутри всех EJS-шаблонов, включая partials
     res.locals.user = req.user;
 
     next();

@@ -1,7 +1,6 @@
 const path = require('path');
 const express = require('express');
 
-const activitiesRouter = require('./routes/activities');
 const webRouter = require('./routes/web');
 const logger = require('./middleware/logger');
 const fakeAuth = require('./middleware/fakeAuth');
@@ -23,8 +22,6 @@ app.use(express.urlencoded({ extended: true })); // данные HTML-форм
 app.use(logger);    // логирование метода, URL и времени
 app.use(fakeAuth);  // имитация авторизации (?auth=1)
 
-// --- Маршруты ---
-app.use('/activities', activitiesRouter); // JSON API
 app.use('/', webRouter);                  // HTML-страницы (EJS)
 
 // --- Middleware обработки 404 ---
@@ -47,10 +44,9 @@ app.use((err, req, res, next) => {
 // Создаём таблицу PzActivities (если её нет) и запускаем сервер
 async function start() {
     try {
-        await sequelize.authenticate();           // проверка подключения к БД
-        await sequelize.sync();                    // создание таблицы, если отсутствует
+        await sequelize.authenticate();
+        await sequelize.sync({ alter: true });
 
-        // Наполняем таблицу тестовыми данными только при первом запуске (если пустая)
         const count = await PzActivity.count();
         if (count === 0) {
             await PzActivity.bulkCreate([
@@ -59,14 +55,13 @@ async function start() {
             ]);
             console.log('Таблица PzActivities наполнена тестовыми записями');
         }
-
-        app.listen(PORT, () => {
-            console.log(`Сервер запущен: http://localhost:${PORT}`);
-        });
     } catch (err) {
-        console.error('Не удалось подключиться к базе данных:', err.message);
-        process.exit(1);
+        console.warn('БД недоступна при старте:', err.message);
     }
+
+    app.listen(PORT, () => {
+        console.log(`Сервер запущен: http://localhost:${PORT}`);
+    });
 }
 
 start();

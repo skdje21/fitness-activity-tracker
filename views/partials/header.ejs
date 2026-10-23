@@ -10,9 +10,21 @@
 <header class="site-header">
     <h1>Fitness Activity Tracker</h1>
     <nav>
-        <a href="/">Главная</a>
-        <a href="/add?auth=1">Добавить запись</a>
+        <% if (user.role === 'user') { %>
+            <a href="/?auth=1">Главная</a>
+            <a href="/add?auth=1">Добавить запись</a>
+        <% } else { %>
+            <a href="/">Главная</a>
+        <% } %>
     </nav>
-    <p class="user">Пользователь: <strong><%= user.name %></strong></p>
+    <div class="user-block">
+        <% if (user.role === 'user') { %>
+            <span class="user-name"><%= user.name %></span>
+            <a href="/" class="btn-auth btn-logout">Выйти</a>
+        <% } else { %>
+            <span class="user-name">Гость</span>
+            <a href="/?auth=1" class="btn-auth btn-login">Войти</a>
+        <% } %>
+    </div>
 </header>
 <main>

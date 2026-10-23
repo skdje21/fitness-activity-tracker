@@ -1,0 +1,12 @@
+{
+    "steps": {
+        "min": 0,
+        "max": 999999,
+        "maxLength": 6
+    },
+    "calories": {
+        "min": 0,
+        "max": 999999,
+        "maxLength": 6
+    }
+}

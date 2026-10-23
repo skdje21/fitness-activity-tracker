@@ -2,23 +2,31 @@
 
 <h2>Добавить активность</h2>
 
-<% if (error) { %>
-    <p class="error"><%= error %></p>
-<% } %>
-
-<form action="/add?auth=1" method="POST" class="form">
-    <label>Дата
-        <input type="date" name="date" required>
-    </label>
-    <label>Шаги
-        <input type="number" name="steps" min="0" required>
-    </label>
-    <label>Калории
-        <input type="number" name="calories" min="0" step="0.1" required>
-    </label>
+<form action="/add?auth=1" method="POST" class="form" novalidate>
+    <div class="field <%= errors && errors.date ? 'field-error' : '' %>">
+        <label for="date">Дата</label>
+        <input type="date" name="date" id="date" value="<%= values ? values.date : '' %>">
+        <% if (errors && errors.date) { %>
+            <span class="field-msg"><%= errors.date %></span>
+        <% } %>
+    </div>
+    <div class="field <%= errors && errors.steps ? 'field-error' : '' %>">
+        <label for="steps">Шаги</label>
+        <input type="number" name="steps" id="steps" value="<%= values ? values.steps : '' %>">
+        <% if (errors && errors.steps) { %>
+            <span class="field-msg"><%= errors.steps %></span>
+        <% } %>
+    </div>
+    <div class="field <%= errors && errors.calories ? 'field-error' : '' %>">
+        <label for="calories">Калории</label>
+        <input type="number" name="calories" id="calories" step="0.1" value="<%= values ? values.calories : '' %>">
+        <% if (errors && errors.calories) { %>
+            <span class="field-msg"><%= errors.calories %></span>
+        <% } %>
+    </div>
     <button type="submit">Добавить</button>
 </form>
 
-<p><a href="/">← Назад к списку</a></p>
+<p><a href="/?auth=1">← Назад к списку</a></p>
 
 <%- include('partials/footer') %>

@@ -12,6 +12,7 @@
                 <th>Дата</th>
                 <th>Шаги</th>
                 <th>Калории</th>
+                <th>Создано</th>
                 <th></th>
             </tr>
         </thead>
@@ -22,6 +23,7 @@
                     <td><%= activity.date %></td>
                     <td><%= activity.steps %></td>
                     <td><%= activity.calories %></td>
+                    <td><%= activity.createdAt ? new Date(activity.createdAt).toLocaleString('ru-RU') : '—' %></td>
                     <td><a href="/item/<%= activity.id %>">Подробнее</a></td>
                 </tr>
             <% }); %>
