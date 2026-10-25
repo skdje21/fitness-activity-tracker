@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const authRouter = require('./routes/auth');
 const activitiesRouter = require('./routes/activities');
+const mongoRouter = require('./routes/mongo');
+const connectMongo = require('./db/mongoose');
 
 const app = express();
 const PORT = 3000;
@@ -19,8 +21,9 @@ app.get('/', (req, res) => {
     });
 });
 
-app.use('/activities', activitiesRouter); 
+app.use('/activities', activitiesRouter);
 app.use('/auth', authRouter);
+app.use('/mongo', mongoRouter);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Маршрут не найден' });
@@ -36,6 +39,17 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Внутренняя ошибка сервера' });
 });
 
-app.listen(PORT, () => {
-    console.log(`Сервер запущен: http://localhost:${PORT}`);
-});
+// Подключение к MongoDB и запуск сервера
+async function start() {
+    try {
+        await connectMongo();
+    } catch (err) {
+        console.warn('MongoDB недоступна при старте:', err.message);
+    }
+
+    app.listen(PORT, () => {
+        console.log(`Сервер запущен: http://localhost:${PORT}`);
+    });
+}
+
+start();
