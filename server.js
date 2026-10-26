@@ -1,13 +1,21 @@
 require('dotenv').config();
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const { Server } = require('socket.io');
 const authRouter = require('./routes/auth');
 const activitiesRouter = require('./routes/activities');
 const mongoRouter = require('./routes/mongo');
 const connectMongo = require('./db/mongoose');
+const setupSocket = require('./socket/notifications');
 
 const app = express();
 const PORT = 3000;
+
+// HTTP-сервер поверх Express, к которому прикрепляется Socket.IO
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+setupSocket(io);   // регистрируем обработчики WebSocket-событий
 
 
 app.use(cors());
@@ -47,7 +55,8 @@ async function start() {
         console.warn('MongoDB недоступна при старте:', err.message);
     }
 
-    app.listen(PORT, () => {
+    // Слушаем server (а не app) — иначе Socket.IO не будет работать
+    server.listen(PORT, () => {
         console.log(`Сервер запущен: http://localhost:${PORT}`);
     });
 }

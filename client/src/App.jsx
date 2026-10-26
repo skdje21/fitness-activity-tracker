@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchActivities, addActivity, updateActivity, deleteActivity } from './api';
+import NotificationFeed from './NotificationFeed';
 import './App.css';
 
 function App() {
@@ -168,6 +169,9 @@ function App() {
                     <p className="subtitle">Учёт тренировок: шаги и калории</p>
                 </div>
             </header>
+
+            {/* Лента уведомлений в реальном времени (WebSocket, ПЗ7) */}
+            <NotificationFeed />
 
             {/* Статистика */}
             <section className="stats">
