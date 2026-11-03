@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Stats = require('../models/MongoUser');
 
-// ==================== CRUD: статистика пользователя ====================
 
-// GET /mongo/stats — список всех профилей статистики
+
 router.get('/stats', async (req, res, next) => {
     try {
         const items = await Stats.find();
@@ -12,7 +11,7 @@ router.get('/stats', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// GET /mongo/stats/:id — статистика одного пользователя
+
 router.get('/stats/:id', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
@@ -21,7 +20,7 @@ router.get('/stats/:id', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// POST /mongo/stats — создать профиль статистики
+
 router.post('/stats', async (req, res, next) => {
     try {
         const doc = await Stats.create(req.body);
@@ -33,7 +32,6 @@ router.post('/stats', async (req, res, next) => {
     }
 });
 
-// PUT /mongo/stats/:id — обновить профиль (totalStats, records, profile)
 router.put('/stats/:id', async (req, res, next) => {
     try {
         const doc = await Stats.findByIdAndUpdate(req.params.id, req.body, {
@@ -44,7 +42,6 @@ router.put('/stats/:id', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// DELETE /mongo/stats/:id — удалить профиль статистики
 router.delete('/stats/:id', async (req, res, next) => {
     try {
         const doc = await Stats.findByIdAndDelete(req.params.id);
@@ -53,9 +50,7 @@ router.delete('/stats/:id', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// ==================== Вложенные документы: достижения ====================
 
-// GET /mongo/stats/:id/achievements — список достижений
 router.get('/stats/:id/achievements', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
@@ -67,7 +62,7 @@ router.get('/stats/:id/achievements', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// POST /mongo/stats/:id/achievements — добавить достижение
+
 router.post('/stats/:id/achievements', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
@@ -81,7 +76,7 @@ router.post('/stats/:id/achievements', async (req, res, next) => {
     }
 });
 
-// PUT /mongo/stats/:id/achievements/:achId — обновить достижение
+
 router.put('/stats/:id/achievements/:achId', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
@@ -94,7 +89,7 @@ router.put('/stats/:id/achievements/:achId', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// DELETE /mongo/stats/:id/achievements/:achId — удалить достижение
+
 router.delete('/stats/:id/achievements/:achId', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
@@ -107,9 +102,8 @@ router.delete('/stats/:id/achievements/:achId', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// ==================== Вложенные документы: статистика по типу ====================
 
-// POST /mongo/stats/:id/byType — добавить статистику по типу
+
 router.post('/stats/:id/byType', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
@@ -123,7 +117,7 @@ router.post('/stats/:id/byType', async (req, res, next) => {
     }
 });
 
-// PUT /mongo/stats/:id/byType/:typeId — обновить статистику по типу
+
 router.put('/stats/:id/byType/:typeId', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
@@ -136,9 +130,7 @@ router.put('/stats/:id/byType/:typeId', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// ==================== Вложенные документы: месячная статистика ====================
 
-// POST /mongo/stats/:id/monthly — добавить месячную статистику
 router.post('/stats/:id/monthly', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
@@ -152,9 +144,7 @@ router.post('/stats/:id/monthly', async (req, res, next) => {
     }
 });
 
-// ==================== Вложенные документы: история веса ====================
 
-// POST /mongo/stats/:id/weight — добавить запись веса
 router.post('/stats/:id/weight', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
@@ -168,7 +158,7 @@ router.post('/stats/:id/weight', async (req, res, next) => {
     }
 });
 
-// GET /mongo/stats/:id/weight — история веса
+
 router.get('/stats/:id/weight', async (req, res, next) => {
     try {
         const doc = await Stats.findById(req.params.id);
