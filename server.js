@@ -12,10 +12,9 @@ const setupSocket = require('./socket/notifications');
 const app = express();
 const PORT = 3000;
 
-// HTTP-сервер поверх Express, к которому прикрепляется Socket.IO
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
-setupSocket(io);   // регистрируем обработчики WebSocket-событий
+setupSocket(io); 
 
 
 app.use(cors());
@@ -47,7 +46,7 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Внутренняя ошибка сервера' });
 });
 
-// Подключение к MongoDB и запуск сервера
+
 async function start() {
     try {
         await connectMongo();
@@ -55,7 +54,6 @@ async function start() {
         console.warn('MongoDB недоступна при старте:', err.message);
     }
 
-    // Слушаем server (а не app) — иначе Socket.IO не будет работать
     server.listen(PORT, () => {
         console.log(`Сервер запущен: http://localhost:${PORT}`);
     });

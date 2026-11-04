@@ -23,4 +23,17 @@ export const updateActivity = (id, updated) => api.put(`/activities/${id}`, upda
 
 export const deleteActivity = (id) => api.delete(`/activities/${id}`);
 
+// ---------- Аутентификация ----------
+export const register = (email, password) => api.post('/auth/register', { email, password });
+
+export const login = (email, password) => api.post('/auth/login', { email, password });
+
+export function saveToken(token) {
+    localStorage.setItem('token', token);
+}
+
+export function logout() {
+    localStorage.removeItem('token');
+}
+
 export default api;

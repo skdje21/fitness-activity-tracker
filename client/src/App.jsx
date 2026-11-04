@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
-import { fetchActivities, addActivity, updateActivity, deleteActivity } from './api';
+import { fetchActivities, addActivity, updateActivity, deleteActivity, logout } from './api';
 import NotificationFeed from './NotificationFeed';
+import AuthForm from './AuthForm';
 import './App.css';
 
 function App() {
 
+    const [token, setToken] = useState(() => localStorage.getItem('token'));
+
     const [activities, setActivities] = useState([]);
-    const [loading, setLoading] = useState(true);  
-    const [error, setError] = useState(null);     
-    const [notice, setNotice] = useState(null);     
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [notice, setNotice] = useState(null);
 
     const [date, setDate] = useState('');
     const [type, setType] = useState('');
@@ -34,9 +37,10 @@ function App() {
     }
 
     useEffect(() => {
+        if (!token) return;            // без авторизации данные не грузим
         const timer = setTimeout(() => loadData(search), 400);
         return () => clearTimeout(timer);
-    }, [search]);
+    }, [search, token]);
 
     useEffect(() => {
         document.title = `Активности (${activities.length})`;
@@ -51,6 +55,12 @@ function App() {
 
     function resetForm() {
         setDate(''); setType(''); setSteps(''); setCalories(''); setEditId(null);
+    }
+
+    function handleLogout() {
+        logout();
+        setToken(null);
+        setActivities([]);
     }
 
     
@@ -134,6 +144,11 @@ function App() {
 
     const pendingItem = activities.find(a => a.id === deleteId);
 
+    // Нет токена — показываем форму входа/регистрации
+    if (!token) {
+        return <AuthForm onAuth={setToken} />;
+    }
+
     if (loading) {
         return (
             <div className="app">
@@ -168,10 +183,11 @@ function App() {
                     <h1>Трекер физической активности</h1>
                     <p className="subtitle">Учёт тренировок: шаги и калории</p>
                 </div>
+                <button className="btn btn-ghost logout-btn" onClick={handleLogout}>Выйти</button>
             </header>
 
             {/* Лента уведомлений в реальном времени (WebSocket, ПЗ7) */}
-            <NotificationFeed />
+            <NotificationFeed token={token} />
 
             {/* Статистика */}
             <section className="stats">
