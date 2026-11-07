@@ -523,3 +523,78 @@
 .auth-link:hover {
     text-decoration: underline;
 }
+
+/* ---------- Дашборд (Зона 2) ---------- */
+.dash-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+@media (max-width: 640px) {
+    .dash-cards { grid-template-columns: repeat(2, 1fr); }
+}
+.dash-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+}
+.dash-val { font-size: 22px; font-weight: 700; color: #111827; }
+.dash-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: center; }
+
+.dash-goals { margin-bottom: 20px; }
+.dash-goals-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.dash-goals-head h3, .dash-chart h3, .dash-ach h3 { margin: 0 0 10px; font-size: 16px; }
+.dash-goals-edit { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.dash-goals-edit input { width: 90px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 8px; }
+
+.goal-row { margin-bottom: 12px; }
+.goal-top { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; }
+.goal-nums { color: var(--muted); }
+.goal-track { height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden; }
+.goal-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
+
+.dash-chart { margin-bottom: 20px; }
+.chart-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    height: 140px;
+    padding-top: 8px;
+}
+.chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+.chart-bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+.chart-bar {
+    width: 100%;
+    min-height: 3px;
+    background: linear-gradient(180deg, #34d399, #22c55e);
+    border-radius: 6px 6px 0 0;
+    transition: height 0.4s ease;
+}
+.chart-x { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+.ach-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.ach-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #fde68a;
+    background: #fffbeb;
+    border-radius: 999px;
+    font-size: 13px;
+}
+.ach-icon { font-size: 18px; }
+.ach-title { font-weight: 600; color: #92400e; }

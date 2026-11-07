@@ -23,7 +23,8 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      // Активность принадлежит пользователю
+      Activity.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     }
 
     toJSON() {
@@ -39,7 +40,8 @@ module.exports = (sequelize, DataTypes) => {
     type: DataTypes.STRING,
     steps: DataTypes.INTEGER,
     calories: DataTypes.FLOAT,
-    duration: DataTypes.INTEGER
+    duration: DataTypes.INTEGER,
+    userId: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'Activity',

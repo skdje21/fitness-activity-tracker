@@ -23,6 +23,13 @@ export const updateActivity = (id, updated) => api.put(`/activities/${id}`, upda
 
 export const deleteActivity = (id) => api.delete(`/activities/${id}`);
 
+// ---------- Дашборд (статистика, цели) ----------
+export const fetchSummary = () => api.get('/dashboard/summary');
+
+export const fetchGoals = () => api.get('/dashboard/goals');
+
+export const updateGoals = (goals) => api.put('/dashboard/goals', goals);
+
 // ---------- Аутентификация ----------
 export const register = (email, password) => api.post('/auth/register', { email, password });
 

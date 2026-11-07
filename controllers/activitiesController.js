@@ -1,4 +1,5 @@
 const { Activity, Sequelize } = require('../models');
+const { safeRecompute } = require('../services/statsService');
 
 function parseId(req) {
     return Number(req.params.id);
@@ -37,9 +38,12 @@ async function getActivities(req, res, next) {
             conditions.push({ type: { [Sequelize.Op.iLike]: `%${search}%` } });
         }
 
-        const where = conditions.length ? { [Sequelize.Op.and]: conditions } : {};
+        // Показываем только активности текущего пользователя
+        conditions.push({ userId: req.user.id });
 
-        const activities = await Activity.findAll({ where });
+        const where = { [Sequelize.Op.and]: conditions };
+
+        const activities = await Activity.findAll({ where, order: [['date', 'ASC']] });
         res.status(200).json(activities);
     } catch (error) {
         next(error);
@@ -49,7 +53,7 @@ async function getActivities(req, res, next) {
 
 async function getActivityById(req, res, next) {
     try {
-        const activity = await Activity.findByPk(parseId(req));
+        const activity = await Activity.findOne({ where: { id: parseId(req), userId: req.user.id } });
         if (!activity) {
             return res.status(404).json({ error: 'Запись активности не найдена' });
         }
@@ -68,7 +72,8 @@ async function createActivity(req, res, next) {
         }
 
         const { date, type, steps, calories, duration } = req.body;
-        const created = await Activity.create({ date, type, steps, calories, duration });
+        const created = await Activity.create({ date, type, steps, calories, duration, userId: req.user.id });
+        await safeRecompute(req.user.id); // авто-обновление статистики и достижений
         res.status(201).json(created);
     } catch (error) {
         next(error);
@@ -84,12 +89,17 @@ async function updateActivity(req, res, next) {
             return res.status(400).json({ error });
         }
 
-        const [updatedCount] = await Activity.update(req.body, { where: { id } });
+        const { date, type, steps, calories, duration } = req.body;
+        const [updatedCount] = await Activity.update(
+            { date, type, steps, calories, duration },
+            { where: { id, userId: req.user.id } }
+        );
         if (updatedCount === 0) {
             return res.status(404).json({ error: 'Запись активности не найдена' });
         }
 
         const updated = await Activity.findByPk(id);
+        await safeRecompute(req.user.id);
         res.status(200).json(updated);
     } catch (error) {
         next(error);
@@ -98,10 +108,11 @@ async function updateActivity(req, res, next) {
 
 async function deleteActivity(req, res, next) {
     try {
-        const deletedCount = await Activity.destroy({ where: { id: parseId(req) } });
+        const deletedCount = await Activity.destroy({ where: { id: parseId(req), userId: req.user.id } });
         if (deletedCount === 0) {
             return res.status(404).json({ error: 'Запись активности не найдена' });
         }
+        await safeRecompute(req.user.id);
         res.status(200).json({ message: 'Запись активности удалена' });
     } catch (error) {
         next(error);

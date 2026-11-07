@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { fetchActivities, addActivity, updateActivity, deleteActivity, logout } from './api';
 import NotificationFeed from './NotificationFeed';
 import AuthForm from './AuthForm';
+import Dashboard from './Dashboard';
 import './App.css';
 
 function App() {
@@ -23,6 +24,10 @@ function App() {
     const [sortBy, setSortBy] = useState('date');
 
     const [deleteId, setDeleteId] = useState(null);
+
+    // Счётчик для обновления дашборда после изменения активностей
+    const [statsVersion, setStatsVersion] = useState(0);
+    const refreshStats = () => setStatsVersion((v) => v + 1);
 
     async function loadData(searchTerm = '') {
         try {
@@ -77,8 +82,9 @@ function App() {
             setActivities(prev => [...prev, optimistic]); 
             resetForm();
             try {
-                const res = await addActivity(payload);                
+                const res = await addActivity(payload);
                 setActivities(prev => prev.map(a => a.id === tempId ? res.data : a));
+                refreshStats();
             } catch (err) {
                 setActivities(prev => prev.filter(a => a.id !== tempId)); 
                 setNotice('Не удалось добавить запись');
@@ -91,8 +97,9 @@ function App() {
             setActivities(prev => prev.map(a => a.id === id ? updatedItem : a)); 
             resetForm();
             try {
-                const res = await updateActivity(id, payload);         
-                setActivities(prev => prev.map(a => a.id === id ? res.data : a)); 
+                const res = await updateActivity(id, payload);
+                setActivities(prev => prev.map(a => a.id === id ? res.data : a));
+                refreshStats();
             } catch (err) {
                 setActivities(prev => prev.map(a => a.id === id ? prevItem : a)); // 4) откат при ошибке
                 setNotice('Не удалось обновить запись');
@@ -120,9 +127,10 @@ function App() {
         if (editId === id) resetForm();
         setDeleteId(null);
         try {
-            await deleteActivity(id);                          
+            await deleteActivity(id);
+            refreshStats();
         } catch (err) {
-            setActivities(prev => [...prev, prevItem]);        
+            setActivities(prev => [...prev, prevItem]);
             setNotice('Не удалось удалить запись');
         }
     }
@@ -185,6 +193,9 @@ function App() {
                 </div>
                 <button className="btn btn-ghost logout-btn" onClick={handleLogout}>Выйти</button>
             </header>
+
+            {/* Дашборд: статистика, цели, достижения (авто-расчёт) */}
+            <Dashboard version={statsVersion} />
 
             {/* Лента уведомлений в реальном времени (WebSocket, ПЗ7) */}
             <NotificationFeed token={token} />

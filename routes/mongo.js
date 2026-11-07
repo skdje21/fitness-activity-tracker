@@ -6,7 +6,8 @@ const Stats = require('../models/MongoUser');
 
 router.get('/stats', async (req, res, next) => {
     try {
-        const items = await Stats.find();
+        // Только статистика текущего пользователя (связь с PostgreSQL по userId)
+        const items = await Stats.find({ userId: String(req.user.id) });
         res.json({ data: items, meta: { total: items.length } });
     } catch (err) { next(err); }
 });
@@ -21,7 +22,8 @@ router.get('/stats/:id', async (req, res, next) => {
 
 router.post('/stats', async (req, res, next) => {
     try {
-        const doc = await Stats.create(req.body);
+        // userId берётся из токена — профиль статистики привязан к пользователю PostgreSQL
+        const doc = await Stats.create({ ...req.body, userId: String(req.user.id) });
         res.status(201).json({ data: doc });
     } catch (err) {
         if (err.name === 'ValidationError') return res.status(400).json({ error: err.message });

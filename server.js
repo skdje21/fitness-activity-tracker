@@ -6,11 +6,13 @@ const { Server } = require('socket.io');
 const authRouter = require('./routes/auth');
 const activitiesRouter = require('./routes/activities');
 const mongoRouter = require('./routes/mongo');
+const dashboardRouter = require('./routes/dashboard');
 const connectMongo = require('./db/mongoose');
 const setupSocket = require('./socket/notifications');
+const authMiddleware = require('./middleware/auth');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
@@ -28,9 +30,11 @@ app.get('/', (req, res) => {
     });
 });
 
-app.use('/activities', activitiesRouter);
 app.use('/auth', authRouter);
-app.use('/mongo', mongoRouter);
+// Данные пользователя доступны только после авторизации (JWT)
+app.use('/activities', authMiddleware, activitiesRouter);
+app.use('/mongo', authMiddleware, mongoRouter);
+app.use('/dashboard', authMiddleware, dashboardRouter);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Маршрут не найден' });
