@@ -10,7 +10,7 @@ const connectMongo = require('./db/mongoose');
 const setupSocket = require('./socket/notifications');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
@@ -26,6 +26,11 @@ app.get('/', (req, res) => {
         name: 'Fitness Activity Tracker API',
         resource: '/activities'
     });
+});
+
+// Healthcheck для Docker (доп. требование лабы)
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
 });
 
 app.use('/activities', activitiesRouter);

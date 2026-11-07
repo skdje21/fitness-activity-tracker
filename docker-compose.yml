@@ -1,0 +1,62 @@
+services:
+  # ---- Backend (Node.js + Express) ----
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      PG_HOST: db
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_DATABASE: fitness_tracker
+      MONGO_URI: mongodb://mongo:27017/fitness_tracker
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me}
+    depends_on:
+      db:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Frontend (React + Vite, раздаётся через nginx) ----
+  frontend:
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: http://localhost:3000
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  # ---- PostgreSQL ----
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fitness_tracker
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---- MongoDB ----
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongodata:/data/db
+
+volumes:
+  pgdata:
+  mongodata:
