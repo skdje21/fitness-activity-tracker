@@ -58,6 +58,11 @@ export const register = (email, password) => api.post('/auth/register', { email,
 
 export const login = (email, password) => api.post('/auth/login', { email, password });
 
+export const forgotPassword = (email) => api.post('/auth/forgot-password', { email });
+
+export const resetPassword = (email, code, newPassword) =>
+    api.post('/auth/reset-password', { email, code, newPassword });
+
 export function saveToken(token) {
     localStorage.setItem('token', token);
 }

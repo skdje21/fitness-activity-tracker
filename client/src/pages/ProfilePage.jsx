@@ -9,7 +9,6 @@ export default function ProfilePage({ onLogout }) {
     const [email, setEmail] = useState('');
     const [goals, setGoals] = useState({ dailySteps: '', dailyCalories: '' });
     const [profile, setProfile] = useState({ height: '', weight: '', birthYear: '', gender: '' });
-    const [editProfile, setEditProfile] = useState(null);       // null = режим просмотра
     const [weightHistory, setWeightHistory] = useState([]);
     const [newWeight, setNewWeight] = useState('');
     const [loading, setLoading] = useState(true);
@@ -21,21 +20,23 @@ export default function ProfilePage({ onLogout }) {
         if (me.status === 'fulfilled') setEmail(me.value.data.email || '');
 
         if (g.status === 'fulfilled') {
+            const gd = g.value.data.data || g.value.data;
             setGoals({
-                dailySteps: g.value.data.dailySteps ?? 10000,
-                dailyCalories: g.value.data.dailyCalories ?? 500,
+                dailySteps: gd.dailySteps ?? 10000,
+                dailyCalories: gd.dailyCalories ?? 500,
             });
         }
 
         if (p.status === 'fulfilled') {
-            const pr = p.value.data.profile || {};
+            const pd = p.value.data.data || p.value.data;
+            const pr = pd.profile || {};
             setProfile({
                 height: pr.height ?? '',
                 weight: pr.weight ?? '',
                 birthYear: pr.birthYear ?? '',
                 gender: pr.gender ?? '',
             });
-            setWeightHistory(p.value.data.weightHistory || []);
+            setWeightHistory(pd.weightHistory || []);
         } else {
             setNotice({ msg: 'Профиль недоступен — перезапустите сервер', ok: false });
         }
@@ -59,23 +60,15 @@ export default function ProfilePage({ onLogout }) {
         } catch { setNotice({ msg: 'Ошибка сохранения целей', ok: false }); }
     }
 
-    function startEditProfile() {
-        setEditProfile({ ...profile });
-    }
-
     async function saveProfile(e) {
         e.preventDefault();
         try {
-            const res = await updateProfile(editProfile);
+            const res = await updateProfile(profile);
             setNotice({ msg: 'Профиль сохранён', ok: true });
-            const saved = res.data || editProfile;
-            setProfile({
-                height: saved.height ?? editProfile.height,
-                weight: saved.weight ?? editProfile.weight,
-                birthYear: saved.birthYear ?? editProfile.birthYear,
-                gender: saved.gender ?? editProfile.gender,
-            });
-            setEditProfile(null);
+            const saved = res.data.data || res.data;
+            if (saved) {
+                setProfile((p) => ({ ...p, ...saved }));
+            }
         } catch { setNotice({ msg: 'Ошибка сохранения профиля', ok: false }); }
     }
 
@@ -89,6 +82,7 @@ export default function ProfilePage({ onLogout }) {
         try {
             await addWeight({ weight: v });
             setNewWeight('');
+            setProfile((p) => ({ ...p, weight: v }));
             setNotice({ msg: 'Вес добавлен', ok: true });
             loadAll();
         } catch { setNotice({ msg: 'Ошибка добавления веса', ok: false }); }
@@ -104,9 +98,6 @@ export default function ProfilePage({ onLogout }) {
     const bmi = h > 0 && w > 0 ? (w / Math.pow(h / 100, 2)) : null;
     const bmiLabel = bmi == null ? '' :
         bmi < 18.5 ? 'недостаток веса' : bmi < 25 ? 'норма' : bmi < 30 ? 'избыток' : 'ожирение';
-
-    const hasSavedProfile = profile.height || profile.weight || profile.birthYear || profile.gender;
-    const isEditing = editProfile !== null;
 
     // Данные для линейного графика веса (последние 14 записей)
     const chartData = weightHistory.slice(-14);
@@ -145,78 +136,43 @@ export default function ProfilePage({ onLogout }) {
                 {/* Физические параметры */}
                 <section className="card">
                     <h3>Физические параметры</h3>
-
-                    {!isEditing ? (
-                        /* --- Режим просмотра --- */
-                        <>
-                            {hasSavedProfile ? (
-                                <div className="profile-view">
-                                    <div className="profile-row">
-                                        <span className="profile-label">Рост</span>
-                                        <span className="profile-value">{profile.height ? `${profile.height} см` : '—'}</span>
-                                    </div>
-                                    <div className="profile-row">
-                                        <span className="profile-label">Вес</span>
-                                        <span className="profile-value">{profile.weight ? `${profile.weight} кг` : '—'}</span>
-                                    </div>
-                                    <div className="profile-row">
-                                        <span className="profile-label">Год рождения</span>
-                                        <span className="profile-value">{profile.birthYear || '—'}</span>
-                                    </div>
-                                    <div className="profile-row">
-                                        <span className="profile-label">Пол</span>
-                                        <span className="profile-value">{GENDER_LABEL[profile.gender] || '—'}</span>
-                                    </div>
-                                    {bmi != null && (
-                                        <div className="profile-row">
-                                            <span className="profile-label">ИМТ (BMI)</span>
-                                            <span className="profile-value"><b>{bmi.toFixed(1)}</b> — {bmiLabel}</span>
-                                        </div>
-                                    )}
+                    <div className="profile-edit-wrap">
+                        <form onSubmit={saveProfile}>
+                            <div className="profile-edit-grid">
+                                <div className="profile-edit-field">
+                                    <label>Рост, см</label>
+                                    <input type="number" min="50" max="250" step="1" value={profile.height}
+                                        onChange={(e) => setProfile({ ...profile, height: e.target.value })} />
                                 </div>
-                            ) : (
-                                <p className="subtitle">Параметры не заполнены</p>
-                            )}
-                            <button type="button" className="btn btn-primary" style={{ marginTop: 12 }} onClick={startEditProfile}>
-                                Редактировать
-                            </button>
-                        </>
-                    ) : (
-                        /* --- Режим редактирования --- */
-                        <div className="profile-edit-wrap">
-                            <form onSubmit={saveProfile}>
-                                <div className="profile-edit-grid">
-                                    <div className="profile-edit-field">
-                                        <label>Рост, см</label>
-                                        <input type="number" min="50" max="250" step="1" value={editProfile.height}
-                                            onChange={(e) => setEditProfile({ ...editProfile, height: e.target.value })} />
-                                    </div>
-                                    <div className="profile-edit-field">
-                                        <label>Вес, кг</label>
-                                        <input type="number" min="20" max="400" step="0.1" value={editProfile.weight}
-                                            onChange={(e) => setEditProfile({ ...editProfile, weight: e.target.value })} />
-                                    </div>
-                                    <div className="profile-edit-field">
-                                        <label>Год рождения</label>
-                                        <input type="number" min="1900" max="2026" value={editProfile.birthYear}
-                                            onChange={(e) => setEditProfile({ ...editProfile, birthYear: e.target.value })} />
-                                    </div>
-                                    <div className="profile-edit-field">
-                                        <label>Пол</label>
-                                        <select value={editProfile.gender} onChange={(e) => setEditProfile({ ...editProfile, gender: e.target.value })}>
-                                            <option value="">—</option>
-                                            <option value="male">Мужской</option>
-                                            <option value="female">Женский</option>
-                                        </select>
-                                    </div>
+                                <div className="profile-edit-field">
+                                    <label>Вес, кг</label>
+                                    <input type="number" min="20" max="400" step="0.1" value={profile.weight}
+                                        onChange={(e) => setProfile({ ...profile, weight: e.target.value })} />
                                 </div>
-                                <div className="modal-actions" style={{ marginTop: 14 }}>
-                                    <button type="button" className="btn btn-ghost" onClick={() => setEditProfile(null)}>Отмена</button>
-                                    <button type="submit" className="btn btn-primary">Сохранить</button>
+                                <div className="profile-edit-field">
+                                    <label>Год рождения</label>
+                                    <input type="number" min="1900" max="2026" value={profile.birthYear}
+                                        onChange={(e) => setProfile({ ...profile, birthYear: e.target.value })} />
                                 </div>
-                            </form>
-                        </div>
-                    )}
+                                <div className="profile-edit-field">
+                                    <label>Пол</label>
+                                    <select value={profile.gender} onChange={(e) => setProfile({ ...profile, gender: e.target.value })}>
+                                        <option value="">—</option>
+                                        <option value="male">Мужской</option>
+                                        <option value="female">Женский</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14 }}>
+                                <button type="submit" className="btn btn-primary">Сохранить</button>
+                                {bmi != null && (
+                                    <span className="subtitle" style={{ margin: 0 }}>
+                                        ИМТ (BMI): <b style={{ color: 'var(--text)' }}>{bmi.toFixed(1)}</b> — {bmiLabel}
+                                    </span>
+                                )}
+                            </div>
+                        </form>
+                    </div>
                 </section>
             </div>
 
@@ -298,7 +254,7 @@ function WeightLineChart({ data, minW, maxW }) {
                         <line x1={padX} y1={y(val)} x2={W - padR} y2={y(val)}
                             stroke="var(--border)" strokeWidth="0.5" strokeDasharray="4 3" />
                         <text x={padX - 6} y={y(val) + 4} textAnchor="end"
-                            fill="var(--text-muted)" fontSize="10">{val.toFixed(1)}</text>
+                            fill="var(--text)" fontSize="10" opacity="0.7">{val.toFixed(1)}</text>
                     </g>
                 ))}
 
@@ -322,7 +278,7 @@ function WeightLineChart({ data, minW, maxW }) {
                                 fill="var(--text)" fontSize="10" fontWeight="600">{e.weight}</text>
                             {/* Дата под осью */}
                             <text x={cx} y={H - 4} textAnchor="middle"
-                                fill="var(--text-muted)" fontSize="9">{dateLabel}</text>
+                                fill="var(--text)" fontSize="9" opacity="0.7">{dateLabel}</text>
                         </g>
                     );
                 })}
