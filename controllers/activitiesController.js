@@ -5,20 +5,41 @@ function parseId(req) {
     return Number(req.params.id);
 }
 
-function validatePayload(body) {
-    const { date, steps, calories, duration } = body;
+// Пределы значений (защита от абсурдных и некорректных данных)
+const LIMITS = { steps: 200000, calories: 50000, duration: 1440, typeLen: 50 };
 
-    if (!date || typeof date !== 'string') {
-        return 'Поле "date" обязательно и должно быть строкой (YYYY-MM-DD)';
+function validatePayload(body) {
+    const { date, type, steps, calories, duration } = body;
+
+    // Дата: формат ГГГГ-ММ-ДД и валидность
+    if (!date || typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return 'Поле "date" обязательно в формате ГГГГ-ММ-ДД';
     }
+    if (Number.isNaN(new Date(date).getTime())) {
+        return 'Некорректная дата';
+    }
+    // Тип: строка разумной длины
+    if (type != null && (typeof type !== 'string' || type.trim() === '' || type.length > LIMITS.typeLen)) {
+        return `Поле "type" обязательно и не длиннее ${LIMITS.typeLen} символов`;
+    }
+    // Шаги: целое, 0..200000
     if (!Number.isInteger(steps) || steps < 0) {
-        return 'Поле "steps" обязательно и должно быть целым неотрицательным числом';
+        return 'Поле "steps" должно быть целым неотрицательным числом';
     }
+    if (steps > LIMITS.steps) {
+        return `Поле "steps" не может превышать ${LIMITS.steps}`;
+    }
+    // Калории: число, 0..50000
     if (!Number.isFinite(calories) || calories < 0) {
-        return 'Поле "calories" обязательно и должно быть неотрицательным числом';
+        return 'Поле "calories" должно быть неотрицательным числом';
     }
-    if (duration !== undefined && duration !== null && (!Number.isInteger(duration) || duration < 0)) {
-        return 'Поле "duration" должно быть целым неотрицательным числом (минуты)';
+    if (calories > LIMITS.calories) {
+        return `Поле "calories" не может превышать ${LIMITS.calories}`;
+    }
+    // Длительность (минуты): целое, 0..1440
+    if (duration !== undefined && duration !== null &&
+        (!Number.isInteger(duration) || duration < 0 || duration > LIMITS.duration)) {
+        return `Поле "duration" должно быть целым числом от 0 до ${LIMITS.duration} (минуты)`;
     }
 
     return null;

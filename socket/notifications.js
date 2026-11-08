@@ -49,16 +49,23 @@ function setupSocket(io) {
 
 
         socket.on('activity', async (data) => {
-            const steps = Number(data && data.steps) || 0;
-            const type = (data && data.type) || 'Активность';
+            // Валидация: шаги — целое 0..200000, тип — короткая строка
+            let steps = Number(data && data.steps);
+            if (!Number.isInteger(steps) || steps < 0) steps = 0;
+            if (steps > 200000) steps = 200000;
+            let type = (data && typeof data.type === 'string') ? data.type.trim() : '';
+            if (!type) type = 'Активность';
+            if (type.length > 50) type = type.slice(0, 50);
             const text = `${user} добавил активность: ${type}, ${steps} шагов`;
             const note = await saveNote('activity', user, text);
-            io.emit('notification', note); 
+            io.emit('notification', note);
         });
 
 
         socket.on('achievement', async (data) => {
-            const title = (data && data.title) || 'Достижение';
+            let title = (data && typeof data.title === 'string') ? data.title.trim() : '';
+            if (!title) title = 'Достижение';
+            if (title.length > 100) title = title.slice(0, 100);
             const text = `${user} получил достижение: ${title}`;
             const note = await saveNote('achievement', user, text);
             io.emit('notification', note);

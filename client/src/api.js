@@ -13,6 +13,20 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// При 401 с просроченным/битым токеном — очищаем токен и возвращаем на экран входа
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const hadToken = !!localStorage.getItem('token');
+        const url = (error.config && error.config.url) || '';
+        if (error.response && error.response.status === 401 && hadToken && !url.includes('/auth/')) {
+            localStorage.removeItem('token');
+            window.location.reload();
+        }
+        return Promise.reject(error);
+    }
+);
+
 
 export const fetchActivities = (search = '') =>
     api.get('/activities', { params: search ? { search } : {} });
@@ -29,6 +43,15 @@ export const fetchSummary = () => api.get('/dashboard/summary');
 export const fetchGoals = () => api.get('/dashboard/goals');
 
 export const updateGoals = (goals) => api.put('/dashboard/goals', goals);
+
+// ---------- Профиль пользователя ----------
+export const fetchMe = () => api.get('/auth/profile');
+
+export const fetchProfile = () => api.get('/dashboard/profile');
+
+export const updateProfile = (data) => api.put('/dashboard/profile', data);
+
+export const addWeight = (entry) => api.post('/dashboard/weight', entry);
 
 // ---------- Аутентификация ----------
 export const register = (email, password) => api.post('/auth/register', { email, password });

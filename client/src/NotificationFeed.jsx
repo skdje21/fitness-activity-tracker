@@ -60,65 +60,52 @@ export default function NotificationFeed({ token }) {
     }
 
     return (
-        <section className="card">
-            <h2>🔔 Лента активности (реальное время)</h2>
-
+        <section className="card feed-card">
             {authError ? (
                 <p className="auth-error">Не удалось подключиться к ленте: {authError}</p>
             ) : (
                 <>
-                    <p className="subtitle">
-                        Вы вошли как <b>{user}</b> ·{' '}
-                        {connected ? <>онлайн: <b>{online}</b></> : 'подключение…'}
-                    </p>
+                    {/* Статус подключения */}
+                    <div className="feed-status">
+                        <span className={'conn-dot' + (connected ? ' online' : '')}></span>
+                        <span>Вы вошли как <b>{user}</b></span>
+                        <span className="feed-online">{connected ? `онлайн: ${online}` : 'подключение…'}</span>
+                    </div>
 
-                    {/* Отправка событий */}
-                    <div className="form" style={{ marginBottom: 12 }}>
-                        <div className="field">
-                            <label>Тип активности</label>
-                            <select value={type} onChange={e => setType(e.target.value)}>
-                                <option>Бег</option>
-                                <option>Ходьба</option>
-                                <option>Велосипед</option>
-                                <option>Хайкинг</option>
-                            </select>
+                    {/* Отправка события */}
+                    <div className="feed-send">
+                        <div className="feed-send-row">
+                            <div className="field">
+                                <label>Тип активности</label>
+                                <select value={type} onChange={e => setType(e.target.value)}>
+                                    <option>Бег</option>
+                                    <option>Ходьба</option>
+                                    <option>Велосипед</option>
+                                    <option>Хайкинг</option>
+                                </select>
+                            </div>
+                            <div className="field">
+                                <label>Шаги</label>
+                                <input type="number" min="0" placeholder="0" value={steps} onChange={e => setSteps(e.target.value)} />
+                            </div>
                         </div>
-                        <div className="field">
-                            <label>Шаги</label>
-                            <input
-                                type="number" min="0" placeholder="0"
-                                value={steps}
-                                onChange={e => setSteps(e.target.value)}
-                            />
-                        </div>
-                        <div className="form-actions">
-                            <button className="btn btn-primary" onClick={sendActivity} disabled={!connected}>
-                                Отправить активность
-                            </button>
-                            <button className="btn btn-ghost" onClick={sendAchievement} disabled={!connected}>
-                                🏆 Достижение
-                            </button>
+                        <div className="feed-send-actions">
+                            <button className="btn btn-primary" onClick={sendActivity} disabled={!connected}>Отправить активность</button>
+                            <button className="btn btn-ghost" onClick={sendAchievement} disabled={!connected}>🏆 Достижение</button>
                         </div>
                     </div>
 
-                    {/* Лента уведомлений */}
-                    <div
-                        ref={feedRef}
-                        style={{
-                            maxHeight: 260, overflowY: 'auto',
-                            border: '1px solid #e5e7eb', borderRadius: 8, padding: 8,
-                        }}
-                    >
+                    {/* Лента событий */}
+                    <div className="feed-list-head">События</div>
+                    <div className="feed-list" ref={feedRef}>
                         {notes.length === 0 ? (
-                            <p className="subtitle">Пока нет событий…</p>
+                            <p className="subtitle" style={{ padding: '8px 4px' }}>Пока нет событий…</p>
                         ) : (
                             notes.map((n, i) => (
-                                <div key={n._id || i} style={{ padding: '6px 4px', borderBottom: '1px solid #f1f5f9' }}>
-                                    <span style={{ marginRight: 8 }}>{ICONS[n.type] || '•'}</span>
-                                    <span>{n.text}</span>
-                                    <span className="subtitle" style={{ marginLeft: 8, fontSize: 12 }}>
-                                        {new Date(n.createdAt).toLocaleTimeString('ru-RU')}
-                                    </span>
+                                <div key={n._id || i} className="feed-item">
+                                    <span className="feed-item-icon">{ICONS[n.type] || '•'}</span>
+                                    <span className="feed-item-text">{n.text}</span>
+                                    <span className="feed-item-time">{new Date(n.createdAt).toLocaleTimeString('ru-RU')}</span>
                                 </div>
                             ))
                         )}
