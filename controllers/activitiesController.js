@@ -64,8 +64,17 @@ async function getActivities(req, res, next) {
 
         const where = { [Sequelize.Op.and]: conditions };
 
-        const activities = await Activity.findAll({ where, order: [['date', 'ASC']] });
-        res.status(200).json(activities);
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+        const offset = (page - 1) * limit;
+
+        const { count, rows } = await Activity.findAndCountAll({
+            where,
+            order: [['date', 'DESC']],
+            limit,
+            offset,
+        });
+        res.status(200).json({ data: rows, total: count, page, limit });
     } catch (error) {
         next(error);
     }

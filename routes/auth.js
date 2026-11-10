@@ -108,7 +108,7 @@ router.post('/reset-password', async (req, res, next) => {
 
 router.post('/register', async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, name } = req.body;
 
         if (!email || typeof email !== 'string') {
             return res.status(400).json({ error: 'Поле "email" обязательно и должно быть строкой' });
@@ -123,9 +123,13 @@ router.post('/register', async (req, res, next) => {
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        const user = await User.create({ email, passwordHash });
+        const trimmedName = (name && typeof name === 'string') ? name.trim().slice(0, 100) : '';
+        if (!trimmedName) {
+            return res.status(400).json({ error: 'Поле "name" обязательно' });
+        }
+        const user = await User.create({ email, passwordHash, name: trimmedName });
 
-        res.status(201).json({ id: user.id, email: user.email });
+        res.status(201).json({ id: user.id, email: user.email, name: user.name });
     } catch (error) {
         next(error);
     }
@@ -170,7 +174,7 @@ router.post('/login', async (req, res, next) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email },
+            { id: user.id, email: user.email, name: user.name || null },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
@@ -187,10 +191,23 @@ router.get('/profile', authMiddleware, async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
-        res.status(200).json({ id: user.id, email: user.email });
+        res.status(200).json({ id: user.id, email: user.email, name: user.name });
     } catch (error) {
         next(error);
     }
+});
+
+router.put('/profile', authMiddleware, async (req, res, next) => {
+    try {
+        const user = await User.findByPk(req.user.id);
+        if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+        const { name } = req.body;
+        if (name !== undefined) {
+            user.name = (typeof name === 'string') ? name.trim().slice(0, 100) || null : null;
+            await user.save();
+        }
+        res.json({ id: user.id, email: user.email, name: user.name });
+    } catch (error) { next(error); }
 });
 
 router.delete('/me', authMiddleware, async (req, res, next) => {

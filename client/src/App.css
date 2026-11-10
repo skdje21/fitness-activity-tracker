@@ -57,7 +57,6 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
-    margin-bottom: 20px;
 }
 
 .stat-card {
@@ -89,7 +88,6 @@
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 20px;
-    margin-bottom: 20px;
 }
 
 .card h2 {
@@ -100,7 +98,7 @@
 
 /* Сбрасываем большой верхний отступ заголовков внутри карточек */
 .card h3 {
-    margin: 0 0 14px;
+    margin: 0 0 18px;
     font-size: 16px;
     font-weight: 700;
 }
@@ -146,6 +144,14 @@
 .field input:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
+/* Форма целей: 2 поля + кнопка в одну строку */
+.goals-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 14px;
+    align-items: end;
 }
 
 .form-actions {
@@ -521,8 +527,8 @@
 .auth-link {
     background: none;
     border: none;
-    color: var(--primary);
-    font-size: 14px;
+    color: var(--muted);
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     padding: 0;
@@ -530,6 +536,7 @@
 
 .auth-link:hover {
     text-decoration: underline;
+    color: var(--text);
 }
 .auth-link-muted {
     color: var(--text);
@@ -556,7 +563,6 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
-    margin-bottom: 20px;
 }
 @media (max-width: 640px) {
     .dash-cards { grid-template-columns: 1fr; }
@@ -579,7 +585,7 @@
 .dash-card.filled .dash-val { color: var(--primary); }
 .dash-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: center; }
 
-.dash-goals { margin-bottom: 20px; }
+.dash-goals { margin-bottom: 0; }
 .dash-goals-head {
     display: flex;
     align-items: center;
@@ -598,7 +604,7 @@
 .goal-track { height: 12px; background: var(--card-2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 .goal-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
 
-.dash-chart { margin-bottom: 20px; }
+.dash-chart { margin-bottom: 0; }
 .chart-bars {
     display: flex;
     align-items: flex-end;
@@ -639,6 +645,29 @@
 }
 .ach-icon { font-size: 18px; }
 .ach-title { font-weight: 600; color: #fbbf24; }
+
+/* Бейджи-карточки на профиле */
+.ach-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+}
+.ach-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 10px;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    background: rgba(245, 158, 11, 0.06);
+    border-radius: 12px;
+    text-align: center;
+    transition: transform 0.2s, border-color 0.2s;
+}
+.ach-card:hover { transform: translateY(-2px); border-color: rgba(245, 158, 11, 0.5); }
+.ach-card-icon { font-size: 28px; }
+.ach-card-title { font-size: 13px; font-weight: 600; color: #fbbf24; line-height: 1.3; }
+.ach-card-date { font-size: 11px; color: var(--muted); }
 
 /* ======== Навигация и разделы (реструктуризация) ======== */
 .navbar {
@@ -698,13 +727,14 @@
 }
 
 /* Заголовок раздела */
+.page { display: flex; flex-direction: column; gap: 18px; animation: fadeIn 0.35s ease both; }
+
 .page-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 18px;
 }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
 
@@ -713,25 +743,75 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 0;
 }
+.dash-grid .card { margin-bottom: 0; }
 @media (max-width: 700px) { .dash-grid { grid-template-columns: 1fr; } }
 
 .card-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
 }
 .card-head h3 { margin: 0; font-size: 16px; }
 
-/* Распределение по типам */
-.type-bars { display: flex; flex-direction: column; gap: 10px; }
-.type-row { display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: 10px; }
-.type-name { font-size: 14px; }
+/* --- Переключатель периода --- */
+.range-btns { display: flex; gap: 4px; }
+.range-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.range-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.range-btn:hover:not(.active) { border-color: var(--primary); color: var(--text); }
+
+/* --- Переключатель метрики --- */
+.metric-toggle { display: flex; gap: 4px; margin-bottom: 10px; }
+.metric-btn {
+    padding: 3px 10px;
+    font-size: 11px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.metric-btn.active { background: var(--card-2); color: var(--text); border-color: var(--text); }
+
+/* --- SVG серия-чарт --- */
+.series-chart-wrap { overflow-x: auto; }
+.series-chart-svg { width: 100%; height: auto; min-height: 180px; }
+
+/* --- Секция типов: donut + bars --- */
+.type-section { display: flex; gap: 24px; align-items: center; }
+@media (max-width: 600px) { .type-section { flex-direction: column; align-items: center; } }
+
+.type-bars { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+.type-row { display: grid; grid-template-columns: 120px 1fr auto; align-items: center; gap: 10px; }
+.type-name { font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.type-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .type-track { height: 12px; background: var(--card-2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 .type-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
 .type-val { font-size: 12px; color: var(--muted, #6b7280); white-space: nowrap; }
+
+/* --- Donut chart --- */
+.donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; }
+.donut-svg { width: 160px; height: 160px; }
+.donut-legend { display: flex; flex-direction: column; gap: 4px; }
+.donut-leg-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; padding: 2px 6px; border-radius: 6px;
+    cursor: pointer; transition: background 0.2s;
+}
+.donut-leg-item.active { background: var(--card-2); }
+.donut-leg-val { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* Модальная форма (шире обычной модалки, поля в столбик) */
 .modal-form { max-width: 460px; width: 100%; text-align: left; }
@@ -828,6 +908,33 @@
 .feed-item-text { flex: 1; min-width: 0; }
 .feed-item-time { color: var(--muted); font-size: 12px; flex-shrink: 0; }
 
+/* ---------- Лидерборд ---------- */
+.leaderboard { display: flex; flex-direction: column; gap: 4px; }
+.lb-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--card-2);
+    transition: background 0.2s;
+}
+.lb-row:hover { background: var(--border); }
+.lb-me { border: 1px solid var(--primary); background: rgba(34, 197, 94, 0.08); }
+.lb-rank { font-size: 18px; width: 32px; text-align: center; flex-shrink: 0; }
+.lb-user { font-size: 14px; font-weight: 600; flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.lb-you {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    padding: 1px 6px; border-radius: 4px;
+    background: var(--primary); color: #fff;
+}
+.lb-stats { display: flex; gap: 14px; flex-shrink: 0; }
+.lb-stat { font-size: 13px; color: var(--muted); white-space: nowrap; }
+@media (max-width: 600px) {
+    .lb-row { flex-wrap: wrap; }
+    .lb-stats { width: 100%; padding-left: 44px; gap: 10px; }
+}
+
 /* ---------- Профиль: режим просмотра ---------- */
 .profile-view {
     display: flex;
@@ -903,4 +1010,53 @@
     min-height: 160px;
     max-height: 220px;
     display: block;
+}
+
+/* ---------- Пагинация ---------- */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+.pagination-info {
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+.pagination .btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* ---------- Inline-валидация форм ---------- */
+.field-error {
+    font-size: 12px;
+    color: var(--danger);
+    margin-top: 2px;
+    line-height: 1.3;
+}
+.field-invalid {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* ---------- Анимации появления ---------- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+    animation: fadeIn 0.35s ease both;
+}
+.fade-in-up {
+    animation: fadeInUp 0.4s ease both;
 }

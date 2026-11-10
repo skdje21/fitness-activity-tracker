@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
-import { fetchMe, fetchGoals, updateGoals, fetchProfile, updateProfile, addWeight } from '../api';
+import { fetchMe, fetchGoals, updateGoals, fetchProfile, updateProfile, addWeight, fetchSummary } from '../api';
+
+const ACH_ICONS = {
+    first_activity: '🎯', sessions_10: '💪', sessions_50: '⭐', sessions_100: '👑',
+    steps_5k_day: '🚶', steps_10k_day: '👟', steps_20k_day: '🏃',
+    steps_50k_total: '📈', steps_100k_total: '🏅', steps_500k_total: '🌟', steps_1m_total: '💎',
+    calories_1k_total: '🔥', calories_10k_total: '🔥', calories_50k_total: '🌋',
+    streak_3: '📅', streak_7: '🗓️', streak_14: '🔥', streak_30: '🏆',
+    multisport: '🤸', multisport_4: '🎪',
+};
 
 function nf(n) { return Number(n || 0).toLocaleString('ru-RU'); }
 
@@ -7,17 +16,22 @@ const GENDER_LABEL = { male: 'Мужской', female: 'Женский' };
 
 export default function ProfilePage({ onLogout }) {
     const [email, setEmail] = useState('');
+    const [userName, setUserName] = useState('');
     const [goals, setGoals] = useState({ dailySteps: '', dailyCalories: '' });
     const [profile, setProfile] = useState({ height: '', weight: '', birthYear: '', gender: '' });
     const [weightHistory, setWeightHistory] = useState([]);
     const [newWeight, setNewWeight] = useState('');
+    const [achievements, setAchievements] = useState([]);
     const [loading, setLoading] = useState(true);
     const [notice, setNotice] = useState(null);
 
     async function loadAll() {
-        const [me, g, p] = await Promise.allSettled([fetchMe(), fetchGoals(), fetchProfile()]);
+        const [me, g, p, s] = await Promise.allSettled([fetchMe(), fetchGoals(), fetchProfile(), fetchSummary()]);
 
-        if (me.status === 'fulfilled') setEmail(me.value.data.email || '');
+        if (me.status === 'fulfilled') {
+            setEmail(me.value.data.email || '');
+            setUserName(me.value.data.name || '');
+        }
 
         if (g.status === 'fulfilled') {
             const gd = g.value.data.data || g.value.data;
@@ -39,6 +53,11 @@ export default function ProfilePage({ onLogout }) {
             setWeightHistory(pd.weightHistory || []);
         } else {
             setNotice({ msg: 'Профиль недоступен — перезапустите сервер', ok: false });
+        }
+
+        if (s.status === 'fulfilled') {
+            const sd = s.value.data.data || s.value.data;
+            setAchievements(sd.achievements || []);
         }
 
         setLoading(false);
@@ -110,7 +129,7 @@ export default function ProfilePage({ onLogout }) {
             <section className="page-head">
                 <div>
                     <h2 className="page-title">Профиль</h2>
-                    <p className="subtitle">{email}</p>
+                    <p className="subtitle">{userName || email}</p>
                 </div>
             </section>
 
@@ -118,7 +137,7 @@ export default function ProfilePage({ onLogout }) {
                 {/* Цели */}
                 <section className="card">
                     <h3>Дневные цели</h3>
-                    <form className="form" onSubmit={saveGoals}>
+                    <form className="goals-form" onSubmit={saveGoals}>
                         <div className="field">
                             <label>Шаги в день</label>
                             <input type="number" min="1" max="100000" step="1" value={goals.dailySteps}
@@ -129,7 +148,7 @@ export default function ProfilePage({ onLogout }) {
                             <input type="number" min="1" max="20000" step="1" value={goals.dailyCalories}
                                 onChange={(e) => setGoals({ ...goals, dailyCalories: e.target.value })} />
                         </div>
-                        <button type="submit" className="btn btn-primary">Сохранить цели</button>
+                        <button type="submit" className="btn btn-primary" style={{ alignSelf: 'end' }}>Сохранить</button>
                     </form>
                 </section>
 
@@ -198,6 +217,24 @@ export default function ProfilePage({ onLogout }) {
                             Записей: {weightHistory.length}. Последний вес: <b>{nf(weightHistory[weightHistory.length - 1].weight)} кг</b>
                         </p>
                     </>
+                )}
+            </section>
+
+            {/* Достижения */}
+            <section className="card">
+                <h3>Достижения ({achievements.length})</h3>
+                {achievements.length === 0 ? (
+                    <p className="subtitle">Пока нет — добавляйте активности, чтобы получить бейджи!</p>
+                ) : (
+                    <div className="ach-grid">
+                        {achievements.map((a) => (
+                            <div className="ach-card" key={a.code || a._id}>
+                                <span className="ach-card-icon">{ACH_ICONS[a.code] || '🏆'}</span>
+                                <span className="ach-card-title">{a.title}</span>
+                                <span className="ach-card-date">{new Date(a.earnedAt).toLocaleDateString('ru-RU')}</span>
+                            </div>
+                        ))}
+                    </div>
                 )}
             </section>
 

@@ -5,6 +5,7 @@ import { login, register, saveToken, forgotPassword, resetPassword } from './api
 function AuthForm({ onAuth }) {
     // mode: 'login' | 'register' | 'forgot' | 'reset'
     const [mode, setMode] = useState('login');
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [code, setCode] = useState('');
@@ -55,12 +56,13 @@ function AuthForm({ onAuth }) {
 
         // login / register
         if (!email || !password) { setError('Введите email и пароль'); return; }
+        if (mode === 'register' && !name.trim()) { setError('Введите имя'); return; }
         if (password.length < 6) { setError('Пароль должен быть не короче 6 символов'); return; }
 
         setLoading(true);
         try {
             if (mode === 'register') {
-                await register(email, password);
+                await register(email, password, name || undefined);
             }
 
             const res = await login(email, password);
@@ -85,6 +87,20 @@ function AuthForm({ onAuth }) {
                     <p className="auth-sub">Трекер физической активности</p>
 
                     <form onSubmit={handleSubmit} className="auth-form">
+                        {/* Имя — только при регистрации */}
+                        {mode === 'register' && (
+                            <div className="field">
+                                <label>Имя</label>
+                                <input
+                                    type="text"
+                                    placeholder="Например, Иван"
+                                    maxLength={100}
+                                    value={name}
+                                    onChange={e => setName(e.target.value)}
+                                />
+                            </div>
+                        )}
+
                         {/* Email — всегда кроме reset (там фиксирован) */}
                         {mode !== 'reset' && (
                             <div className="field">

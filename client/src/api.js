@@ -28,8 +28,8 @@ api.interceptors.response.use(
 );
 
 
-export const fetchActivities = (search = '') =>
-    api.get('/activities', { params: search ? { search } : {} });
+export const fetchActivities = (search = '', page = 1, limit = 20) =>
+    api.get('/activities', { params: { ...(search ? { search } : {}), page, limit } });
 
 export const addActivity = (activity) => api.post('/activities', activity);
 
@@ -44,6 +44,12 @@ export const fetchGoals = () => api.get('/dashboard/goals');
 
 export const updateGoals = (goals) => api.put('/dashboard/goals', goals);
 
+export const fetchSeries = (range = '7d') => api.get('/dashboard/series', { params: { range } });
+
+export const fetchLeaderboard = (period = 'week') => api.get('/dashboard/leaderboard', { params: { period } });
+
+export const exportCSV = () => api.get('/dashboard/export', { params: { format: 'csv' }, responseType: 'blob' });
+
 // ---------- Профиль пользователя ----------
 export const fetchMe = () => api.get('/auth/profile');
 
@@ -54,7 +60,9 @@ export const updateProfile = (data) => api.put('/dashboard/profile', data);
 export const addWeight = (entry) => api.post('/dashboard/weight', entry);
 
 // ---------- Аутентификация ----------
-export const register = (email, password) => api.post('/auth/register', { email, password });
+export const register = (email, password, name) => api.post('/auth/register', { email, password, name });
+
+export const updateName = (name) => api.put('/auth/profile', { name });
 
 export const login = (email, password) => api.post('/auth/login', { email, password });
 

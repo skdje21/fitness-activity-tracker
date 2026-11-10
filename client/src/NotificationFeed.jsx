@@ -54,10 +54,6 @@ export default function NotificationFeed({ token }) {
         setSteps('');
     }
 
-    function sendAchievement() {
-        if (!socketRef.current) return;
-        socketRef.current.emit('achievement', { title: '10 000 шагов за день' });
-    }
 
     return (
         <section className="card feed-card">
@@ -91,7 +87,6 @@ export default function NotificationFeed({ token }) {
                         </div>
                         <div className="feed-send-actions">
                             <button className="btn btn-primary" onClick={sendActivity} disabled={!connected}>Отправить активность</button>
-                            <button className="btn btn-ghost" onClick={sendAchievement} disabled={!connected}>🏆 Достижение</button>
                         </div>
                     </div>
 
