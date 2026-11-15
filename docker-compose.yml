@@ -1,5 +1,4 @@
 services:
-  # ---- Backend (Node.js + Express) ----
   backend:
     build: .
     ports:
@@ -25,7 +24,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ---- Frontend (React + Vite, раздаётся через nginx) ----
+
   frontend:
     build:
       context: ./client
@@ -36,7 +35,7 @@ services:
     depends_on:
       - backend
 
-  # ---- PostgreSQL ----
+
   db:
     image: postgres:15-alpine
     environment:
@@ -51,7 +50,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ---- MongoDB ----
   mongo:
     image: mongo:7
     volumes:

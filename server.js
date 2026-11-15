@@ -30,7 +30,7 @@ app.get('/', (req, res) => {
     });
 });
 
-// Healthcheck для Docker (доп. требование лабы)
+
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
 });

@@ -85,7 +85,6 @@ function AuthForm({ onAuth }) {
                     <div className="auth-logo">🏃</div>
                     <h2>{titles[mode]}</h2>
                     <p className="auth-sub">Трекер физической активности</p>
-
                     <form onSubmit={handleSubmit} className="auth-form">
                         {/* Имя — только при регистрации */}
                         {mode === 'register' && (
