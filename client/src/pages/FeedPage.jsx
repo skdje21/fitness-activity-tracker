@@ -43,7 +43,7 @@ export default function FeedPage({ token }) {
             <section className="page-head">
                 <div>
                     <h2 className="page-title">Лента активности</h2>
-                    <p className="subtitle">События пользователей в реальном времени (WebSocket)</p>
+                    <p className="subtitle">События пользователей в реальном времени</p>
                 </div>
             </section>
 
