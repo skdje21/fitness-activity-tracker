@@ -43,6 +43,12 @@ const statsSchema = new mongoose.Schema({
         gender:    { type: String, enum: ['male', 'female'] },
     },
 
+    // Цели пользователя (дневные нормы)
+    goals: {
+        dailySteps:    { type: Number, default: 10000 },
+        dailyCalories: { type: Number, default: 500 },
+    },
+
     // История веса (массив, растёт со временем)
     weightHistory: [weightEntrySchema],
 

@@ -1,23 +1,45 @@
 const { Activity, Sequelize } = require('../models');
+const { safeRecompute } = require('../services/statsService');
 
 function parseId(req) {
     return Number(req.params.id);
 }
 
-function validatePayload(body) {
-    const { date, steps, calories, duration } = body;
+// Пределы значений (защита от абсурдных и некорректных данных)
+const LIMITS = { steps: 200000, calories: 50000, duration: 1440, typeLen: 50 };
 
-    if (!date || typeof date !== 'string') {
-        return 'Поле "date" обязательно и должно быть строкой (YYYY-MM-DD)';
+function validatePayload(body) {
+    const { date, type, steps, calories, duration } = body;
+
+    // Дата: формат ГГГГ-ММ-ДД и валидность
+    if (!date || typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return 'Поле "date" обязательно в формате ГГГГ-ММ-ДД';
     }
+    if (Number.isNaN(new Date(date).getTime())) {
+        return 'Некорректная дата';
+    }
+    // Тип: строка разумной длины
+    if (type != null && (typeof type !== 'string' || type.trim() === '' || type.length > LIMITS.typeLen)) {
+        return `Поле "type" обязательно и не длиннее ${LIMITS.typeLen} символов`;
+    }
+    // Шаги: целое, 0..200000
     if (!Number.isInteger(steps) || steps < 0) {
-        return 'Поле "steps" обязательно и должно быть целым неотрицательным числом';
+        return 'Поле "steps" должно быть целым неотрицательным числом';
     }
+    if (steps > LIMITS.steps) {
+        return `Поле "steps" не может превышать ${LIMITS.steps}`;
+    }
+    // Калории: число, 0..50000
     if (!Number.isFinite(calories) || calories < 0) {
-        return 'Поле "calories" обязательно и должно быть неотрицательным числом';
+        return 'Поле "calories" должно быть неотрицательным числом';
     }
-    if (duration !== undefined && duration !== null && (!Number.isInteger(duration) || duration < 0)) {
-        return 'Поле "duration" должно быть целым неотрицательным числом (минуты)';
+    if (calories > LIMITS.calories) {
+        return `Поле "calories" не может превышать ${LIMITS.calories}`;
+    }
+    // Длительность (минуты): целое, 0..1440
+    if (duration !== undefined && duration !== null &&
+        (!Number.isInteger(duration) || duration < 0 || duration > LIMITS.duration)) {
+        return `Поле "duration" должно быть целым числом от 0 до ${LIMITS.duration} (минуты)`;
     }
 
     return null;
@@ -37,10 +59,22 @@ async function getActivities(req, res, next) {
             conditions.push({ type: { [Sequelize.Op.iLike]: `%${search}%` } });
         }
 
-        const where = conditions.length ? { [Sequelize.Op.and]: conditions } : {};
+        // Показываем только активности текущего пользователя
+        conditions.push({ userId: req.user.id });
 
-        const activities = await Activity.findAll({ where });
-        res.status(200).json(activities);
+        const where = { [Sequelize.Op.and]: conditions };
+
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+        const offset = (page - 1) * limit;
+
+        const { count, rows } = await Activity.findAndCountAll({
+            where,
+            order: [['date', 'DESC']],
+            limit,
+            offset,
+        });
+        res.status(200).json({ data: rows, total: count, page, limit });
     } catch (error) {
         next(error);
     }
@@ -49,7 +83,7 @@ async function getActivities(req, res, next) {
 
 async function getActivityById(req, res, next) {
     try {
-        const activity = await Activity.findByPk(parseId(req));
+        const activity = await Activity.findOne({ where: { id: parseId(req), userId: req.user.id } });
         if (!activity) {
             return res.status(404).json({ error: 'Запись активности не найдена' });
         }
@@ -68,7 +102,8 @@ async function createActivity(req, res, next) {
         }
 
         const { date, type, steps, calories, duration } = req.body;
-        const created = await Activity.create({ date, type, steps, calories, duration });
+        const created = await Activity.create({ date, type, steps, calories, duration, userId: req.user.id });
+        await safeRecompute(req.user.id); // авто-обновление статистики и достижений
         res.status(201).json(created);
     } catch (error) {
         next(error);
@@ -84,12 +119,17 @@ async function updateActivity(req, res, next) {
             return res.status(400).json({ error });
         }
 
-        const [updatedCount] = await Activity.update(req.body, { where: { id } });
+        const { date, type, steps, calories, duration } = req.body;
+        const [updatedCount] = await Activity.update(
+            { date, type, steps, calories, duration },
+            { where: { id, userId: req.user.id } }
+        );
         if (updatedCount === 0) {
             return res.status(404).json({ error: 'Запись активности не найдена' });
         }
 
         const updated = await Activity.findByPk(id);
+        await safeRecompute(req.user.id);
         res.status(200).json(updated);
     } catch (error) {
         next(error);
@@ -98,10 +138,11 @@ async function updateActivity(req, res, next) {
 
 async function deleteActivity(req, res, next) {
     try {
-        const deletedCount = await Activity.destroy({ where: { id: parseId(req) } });
+        const deletedCount = await Activity.destroy({ where: { id: parseId(req), userId: req.user.id } });
         if (deletedCount === 0) {
             return res.status(404).json({ error: 'Запись активности не найдена' });
         }
+        await safeRecompute(req.user.id);
         res.status(200).json({ message: 'Запись активности удалена' });
     } catch (error) {
         next(error);

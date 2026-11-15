@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { User } = require('../models');
 const authMiddleware = require('../middleware/auth');
 
@@ -10,9 +11,104 @@ const router = express.Router();
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_DURATION_MS = 5 * 60 * 1000; // 5 минут
 
+// ---------- Сброс пароля ----------
+// Хранилище кодов подтверждения: email → { code, expiresAt }
+const resetCodes = new Map();
+const RESET_CODE_TTL = 10 * 60 * 1000; // 10 минут
+
+// Отправка кода по email (nodemailer) или вывод в консоль
+async function sendResetCode(email, code) {
+    // Попытка отправить через SMTP если настроен
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        try {
+            const nodemailer = require('nodemailer');
+            const transporter = nodemailer.createTransport({
+                host: process.env.SMTP_HOST,
+                port: Number(process.env.SMTP_PORT) || 587,
+                secure: (process.env.SMTP_PORT || '587') === '465',
+                auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+            });
+            await transporter.sendMail({
+                from: process.env.SMTP_FROM || process.env.SMTP_USER,
+                to: email,
+                subject: 'Код сброса пароля — Fitness Tracker',
+                text: `Ваш код подтверждения: ${code}\n\nКод действителен 10 минут.`,
+                html: `<p>Ваш код подтверждения: <b style="font-size:24px;letter-spacing:4px">${code}</b></p><p>Код действителен 10 минут.</p>`,
+            });
+            console.log(`[RESET] Код отправлен на ${email}`);
+            return;
+        } catch (err) {
+            console.error('[RESET] Ошибка отправки email:', err.message);
+        }
+    }
+    // Fallback: вывод в консоль (для демо / защиты)
+    console.log(`\n===== КОД СБРОСА ПАРОЛЯ =====`);
+    console.log(`Email: ${email}`);
+    console.log(`Код:   ${code}`);
+    console.log(`Действителен 10 минут`);
+    console.log(`=============================\n`);
+}
+
+// POST /auth/forgot-password — запрос кода
+router.post('/forgot-password', async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        if (!email || typeof email !== 'string') {
+            return res.status(400).json({ error: 'Введите email' });
+        }
+
+        const user = await User.findOne({ where: { email } });
+        // Не раскрываем, существует ли аккаунт (безопасность)
+        if (!user) {
+            return res.json({ message: 'Если аккаунт существует, код отправлен на указанную почту' });
+        }
+
+        const code = crypto.randomInt(100000, 999999).toString();
+        resetCodes.set(email.toLowerCase(), { code, expiresAt: Date.now() + RESET_CODE_TTL });
+
+        await sendResetCode(email, code);
+
+        res.json({ message: 'Если аккаунт существует, код отправлен на указанную почту' });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// POST /auth/reset-password — проверка кода и установка нового пароля
+router.post('/reset-password', async (req, res, next) => {
+    try {
+        const { email, code, newPassword } = req.body;
+
+        if (!email || !code || !newPassword) {
+            return res.status(400).json({ error: 'Заполните все поля' });
+        }
+        if (typeof newPassword !== 'string' || newPassword.length < 6) {
+            return res.status(400).json({ error: 'Пароль должен быть не короче 6 символов' });
+        }
+
+        const entry = resetCodes.get(email.toLowerCase());
+        if (!entry || entry.code !== String(code) || Date.now() > entry.expiresAt) {
+            return res.status(400).json({ error: 'Неверный или просроченный код' });
+        }
+
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            return res.status(400).json({ error: 'Пользователь не найден' });
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+        await user.update({ passwordHash, failedLoginAttempts: 0, lockUntil: null });
+        resetCodes.delete(email.toLowerCase());
+
+        res.json({ message: 'Пароль успешно изменён' });
+    } catch (err) {
+        next(err);
+    }
+});
+
 router.post('/register', async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, name } = req.body;
 
         if (!email || typeof email !== 'string') {
             return res.status(400).json({ error: 'Поле "email" обязательно и должно быть строкой' });
@@ -27,9 +123,13 @@ router.post('/register', async (req, res, next) => {
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        const user = await User.create({ email, passwordHash });
+        const trimmedName = (name && typeof name === 'string') ? name.trim().slice(0, 100) : '';
+        if (!trimmedName) {
+            return res.status(400).json({ error: 'Поле "name" обязательно' });
+        }
+        const user = await User.create({ email, passwordHash, name: trimmedName });
 
-        res.status(201).json({ id: user.id, email: user.email });
+        res.status(201).json({ id: user.id, email: user.email, name: user.name });
     } catch (error) {
         next(error);
     }
@@ -74,7 +174,7 @@ router.post('/login', async (req, res, next) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email },
+            { id: user.id, email: user.email, name: user.name || null },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
@@ -91,10 +191,23 @@ router.get('/profile', authMiddleware, async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
-        res.status(200).json({ id: user.id, email: user.email });
+        res.status(200).json({ id: user.id, email: user.email, name: user.name });
     } catch (error) {
         next(error);
     }
+});
+
+router.put('/profile', authMiddleware, async (req, res, next) => {
+    try {
+        const user = await User.findByPk(req.user.id);
+        if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+        const { name } = req.body;
+        if (name !== undefined) {
+            user.name = (typeof name === 'string') ? name.trim().slice(0, 100) || null : null;
+            await user.save();
+        }
+        res.json({ id: user.id, email: user.email, name: user.name });
+    } catch (error) { next(error); }
 });
 
 router.delete('/me', authMiddleware, async (req, res, next) => {
