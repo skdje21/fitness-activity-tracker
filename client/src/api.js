@@ -75,7 +75,8 @@ export function saveToken(token) {
     localStorage.setItem('token', token);
 }
 
-export function logout() {
+export async function logout() {
+    try { await api.post('/auth/logout'); } catch { /* ignore */ }
     localStorage.removeItem('token');
 }
 

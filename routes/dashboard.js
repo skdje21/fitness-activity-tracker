@@ -7,6 +7,7 @@ const UserProfile = require('../models/UserProfile');
 const WeightEntry = require('../models/WeightEntry');
 const Achievement = require('../models/Achievement');
 const { recomputeStats, ymd } = require('../services/statsService');
+const { cacheGet, cacheSet } = require('../db/redis');
 
 function pct(value, goal) {
     if (!goal || goal <= 0) return 0;
@@ -157,6 +158,11 @@ router.get('/series', async (req, res, next) => {
 router.get('/leaderboard', async (req, res, next) => {
     try {
         const period = req.query.period || 'week';
+
+        const cacheKey = `leaderboard:${period}`;
+        const cached = await cacheGet(cacheKey);
+        if (cached) return res.json({ data: cached });
+
         const now = new Date();
         let from;
 
@@ -190,6 +196,8 @@ router.get('/leaderboard', async (req, res, next) => {
             ORDER BY "totalSteps" DESC
             LIMIT 20
         `, { type: QueryTypes.SELECT, replacements });
+
+        await cacheSet(cacheKey, rows, 60);
 
         res.json({ data: rows });
     } catch (err) {

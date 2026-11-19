@@ -13,11 +13,14 @@ services:
       PG_DATABASE: fitness_tracker
       MONGO_URI: mongodb://mongo:27017/fitness_tracker
       JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me}
+      REDIS_URL: redis://redis:6379
     depends_on:
       db:
         condition: service_healthy
       mongo:
         condition: service_started
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
       interval: 10s
@@ -55,6 +58,17 @@ services:
     volumes:
       - mongodata:/data/db
 
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   pgdata:
   mongodata:
+  redisdata:

@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { User } = require('../models');
 const authMiddleware = require('../middleware/auth');
+const { blacklistToken } = require('../db/redis');
 
 
 const router = express.Router();
@@ -208,6 +209,17 @@ router.put('/profile', authMiddleware, async (req, res, next) => {
         }
         res.json({ id: user.id, email: user.email, name: user.name });
     } catch (error) { next(error); }
+});
+
+router.post('/logout', authMiddleware, async (req, res, next) => {
+    try {
+        const token = req.headers.authorization.slice('Bearer '.length);
+        const ttl = req.user.exp - Math.floor(Date.now() / 1000);
+        if (ttl > 0) await blacklistToken(token, ttl);
+        res.json({ message: 'Вы вышли из системы' });
+    } catch (error) {
+        next(error);
+    }
 });
 
 router.delete('/me', authMiddleware, async (req, res, next) => {

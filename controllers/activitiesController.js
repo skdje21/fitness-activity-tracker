@@ -1,5 +1,6 @@
 const { Activity, Sequelize } = require('../models');
 const { safeRecompute } = require('../services/statsService');
+const { cacheDel } = require('../db/redis');
 
 function parseId(req) {
     return Number(req.params.id);
@@ -103,7 +104,8 @@ async function createActivity(req, res, next) {
 
         const { date, type, steps, calories, duration } = req.body;
         const created = await Activity.create({ date, type, steps, calories, duration, userId: req.user.id });
-        await safeRecompute(req.user.id); // авто-обновление статистики и достижений
+        await safeRecompute(req.user.id);
+        await cacheDel('leaderboard:*');
         res.status(201).json(created);
     } catch (error) {
         next(error);
@@ -130,6 +132,7 @@ async function updateActivity(req, res, next) {
 
         const updated = await Activity.findByPk(id);
         await safeRecompute(req.user.id);
+        await cacheDel('leaderboard:*');
         res.status(200).json(updated);
     } catch (error) {
         next(error);
@@ -143,6 +146,7 @@ async function deleteActivity(req, res, next) {
             return res.status(404).json({ error: 'Запись активности не найдена' });
         }
         await safeRecompute(req.user.id);
+        await cacheDel('leaderboard:*');
         res.status(200).json({ message: 'Запись активности удалена' });
     } catch (error) {
         next(error);

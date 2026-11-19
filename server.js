@@ -8,8 +8,10 @@ const activitiesRouter = require('./routes/activities');
 const mongoRouter = require('./routes/mongo');
 const dashboardRouter = require('./routes/dashboard');
 const connectMongo = require('./db/mongoose');
+const { connectRedis } = require('./db/redis');
 const setupSocket = require('./socket/notifications');
 const authMiddleware = require('./middleware/auth');
+const setupSwagger = require('./swagger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +23,8 @@ setupSocket(io);
 
 app.use(cors());
 app.use(express.json());
+
+setupSwagger(app);
 
 
 app.get('/', (req, res) => {
@@ -62,6 +66,8 @@ async function start() {
     } catch (err) {
         console.warn('MongoDB недоступна при старте:', err.message);
     }
+
+    await connectRedis();
 
     server.listen(PORT, () => {
         console.log(`Сервер запущен: http://localhost:${PORT}`);

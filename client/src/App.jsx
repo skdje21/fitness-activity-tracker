@@ -12,8 +12,8 @@ import './App.css';
 function App() {
     const [token, setToken] = useState(() => localStorage.getItem('token'));
 
-    function handleLogout() {
-        logout();
+    async function handleLogout() {
+        await logout();
         setToken(null);
     }
 

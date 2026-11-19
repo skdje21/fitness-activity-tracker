@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
+const { isTokenBlacklisted } = require('../db/redis');
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -11,6 +12,11 @@ function authMiddleware(req, res, next) {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if (await isTokenBlacklisted(token)) {
+            return res.status(401).json({ error: 'Токен отозван (logout)' });
+        }
+
         req.user = decoded;
         next();
     } catch (error) {
@@ -18,4 +24,4 @@ function authMiddleware(req, res, next) {
     }
 }
 
-module.exports = authMiddleware; //конец 123
+module.exports = authMiddleware;
