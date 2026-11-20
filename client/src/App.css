@@ -343,8 +343,16 @@
 /* ---------- Адаптивность ---------- */
 @media (max-width: 640px) {
     .stats { grid-template-columns: 1fr; }
-    .form { grid-template-columns: 1fr 1fr; }
+    .form { grid-template-columns: 1fr; }
     .controls { flex-direction: column; }
+    .controls select { min-width: 0; width: 100%; }
+
+    .page-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .page-title { font-size: 20px; }
+
+    .goals-form { grid-template-columns: 1fr; }
+
+    .table th, .table td { padding: 8px 6px; font-size: 13px; }
 }
 
 /* ---------- Кнопка удаления ---------- */
@@ -566,6 +574,8 @@
 }
 @media (max-width: 640px) {
     .dash-cards { grid-template-columns: 1fr; }
+    .dash-card { padding: 14px 12px; }
+    .dash-val { font-size: 20px; }
 }
 .dash-card {
     display: flex;
@@ -721,7 +731,44 @@
 .nav-link.active { background: var(--primary); color: #06230f; }
 .nav-icon { font-size: 16px; }
 
-@media (max-width: 560px) {
+@media (max-width: 600px) {
+    .navbar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        border-radius: 0;
+        margin-bottom: 0;
+        padding: 6px 8px;
+        gap: 0;
+        justify-content: center;
+        z-index: 100;
+        border: none;
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -2px 16px rgba(0,0,0,0.4);
+    }
+    .navbar-brand { display: none; }
+    .navbar .logout-btn { display: none; }
+    .navbar-links {
+        display: flex;
+        gap: 0;
+        width: 100%;
+        justify-content: space-around;
+    }
+    .nav-label { display: none; }
+    .nav-link {
+        padding: 8px 14px;
+        border-radius: 10px;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .nav-icon { font-size: 20px; }
+
+    .app { padding-bottom: 72px; padding-top: 16px; }
+}
+
+@media (min-width: 601px) and (max-width: 760px) {
     .nav-label { display: none; }
     .nav-link { padding: 8px 11px; }
 }
@@ -746,7 +793,14 @@
     margin-bottom: 0;
 }
 .dash-grid .card { margin-bottom: 0; }
-@media (max-width: 700px) { .dash-grid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {
+    .dash-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+    .card { padding: 16px 14px; }
+    .card h3 { font-size: 15px; margin-bottom: 14px; }
+    .card-head { margin-bottom: 10px; }
+}
 
 .card-head {
     display: flex;
@@ -931,8 +985,11 @@
 .lb-stats { display: flex; gap: 14px; flex-shrink: 0; }
 .lb-stat { font-size: 13px; color: var(--muted); white-space: nowrap; }
 @media (max-width: 600px) {
-    .lb-row { flex-wrap: wrap; }
-    .lb-stats { width: 100%; padding-left: 44px; gap: 10px; }
+    .lb-row { flex-wrap: wrap; padding: 10px 10px; gap: 8px; }
+    .lb-stats { width: 100%; padding-left: 44px; gap: 8px; }
+    .lb-rank { font-size: 16px; width: 28px; }
+    .lb-user { font-size: 13px; }
+    .lb-stat { font-size: 12px; }
 }
 
 /* ---------- Профиль: режим просмотра ---------- */
@@ -994,7 +1051,7 @@
     box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
 }
 @media (max-width: 540px) {
-    .profile-edit-grid { grid-template-columns: 1fr 1fr; }
+    .profile-edit-grid { grid-template-columns: 1fr; }
 }
 
 /* ---------- Линейный график веса ---------- */
@@ -1010,6 +1067,23 @@
     min-height: 160px;
     max-height: 220px;
     display: block;
+}
+
+/* ---------- Таблица: мобильный скролл ---------- */
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ---------- Мобильная кнопка выхода ---------- */
+.mobile-logout {
+    display: none;
+}
+@media (max-width: 600px) {
+    .mobile-logout {
+        display: inline-flex;
+    }
 }
 
 /* ---------- Пагинация ---------- */
@@ -1059,4 +1133,36 @@
 }
 .fade-in-up {
     animation: fadeInUp 0.4s ease both;
+}
+
+/* ========== Глобальные мобильные доработки ========== */
+@media (max-width: 480px) {
+    .app { padding: 12px 10px 72px; }
+
+    .stat-value { font-size: 22px; }
+
+    .modal { padding: 20px 16px; max-width: calc(100vw - 32px); }
+    .modal-form { max-width: calc(100vw - 32px); }
+    .modal-form .field input,
+    .modal-form .field select { font-size: 16px; }
+
+    .pagination { gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .pagination .btn { padding: 8px 14px; font-size: 13px; }
+
+    .ach-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .ach-card { padding: 10px 6px; }
+    .ach-card-icon { font-size: 22px; }
+    .ach-card-title { font-size: 12px; }
+
+    .feed-send-row { grid-template-columns: 1fr; }
+
+    .type-row { grid-template-columns: 90px 1fr auto; gap: 6px; }
+    .type-name { font-size: 13px; }
+
+    .donut-svg { width: 120px; height: 120px; }
+
+    .chart-bars { gap: 4px; height: 120px; }
+    .chart-x { font-size: 9px; }
+
+    .range-btns { flex-wrap: wrap; }
 }

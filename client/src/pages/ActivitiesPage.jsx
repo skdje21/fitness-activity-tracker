@@ -153,6 +153,7 @@ export default function ActivitiesPage() {
                     </div>
                 ) : (
                     <>
+                        <div className="table-wrap">
                         <table className="table">
                             <thead>
                                 <tr>
@@ -176,6 +177,7 @@ export default function ActivitiesPage() {
                                 ))}
                             </tbody>
                         </table>
+                        </div>
 
                         {/* Пагинация */}
                         {totalPages > 1 && (

@@ -131,6 +131,9 @@ export default function ProfilePage({ onLogout }) {
                     <h2 className="page-title">Профиль</h2>
                     <p className="subtitle">{userName || email}</p>
                 </div>
+                {onLogout && (
+                    <button className="btn btn-ghost mobile-logout" onClick={onLogout}>Выйти</button>
+                )}
             </section>
 
             <div className="dash-grid">
