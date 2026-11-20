@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
+import Icon from './Icon';
 
 const LINKS = [
-    { to: '/', label: 'Дашборд', icon: '📊', end: true },
-    { to: '/activities', label: 'Активности', icon: '🏃' },
-    { to: '/feed', label: 'Лента', icon: '🔔' },
-    { to: '/profile', label: 'Профиль', icon: '👤' },
+    { to: '/', label: 'Дашборд', icon: 'home', end: true },
+    { to: '/activities', label: 'Активности', icon: 'activity' },
+    { to: '/feed', label: 'Лента', icon: 'bell' },
+    { to: '/profile', label: 'Профиль', icon: 'user' },
 ];
 
 export default function Navbar({ onLogout }) {
@@ -22,7 +23,7 @@ export default function Navbar({ onLogout }) {
                         end={l.end}
                         className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
                     >
-                        <span className="nav-icon">{l.icon}</span>
+                        <span className="nav-icon"><Icon name={l.icon} size={18} /></span>
                         <span className="nav-label">{l.label}</span>
                     </NavLink>
                 ))}

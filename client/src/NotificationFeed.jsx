@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import Icon from './components/Icon';
 
-
-const ICONS = { join: '🟢', leave: '🔴', activity: '🏃', achievement: '🏆' };
+const ICONS = {
+    join: { name: 'check-circle', color: 'var(--primary)' },
+    leave: { name: 'bell', color: 'var(--muted)' },
+    activity: { name: 'activity', color: 'var(--primary)' },
+    achievement: { name: 'trophy', color: '#fbbf24' },
+};
 
 // Достаём email из JWT-токена (payload — средняя часть, закодирована base64url)
 function userFromToken(token) {
@@ -98,7 +103,9 @@ export default function NotificationFeed({ token }) {
                         ) : (
                             notes.map((n, i) => (
                                 <div key={n._id || i} className="feed-item">
-                                    <span className="feed-item-icon">{ICONS[n.type] || '•'}</span>
+                                    <span className="feed-item-icon" style={{ color: (ICONS[n.type] || {}).color || 'var(--muted)' }}>
+                                        <Icon name={(ICONS[n.type] || {}).name || 'activity'} size={16} />
+                                    </span>
                                     <span className="feed-item-text">{n.text}</span>
                                     <span className="feed-item-time">{new Date(n.createdAt).toLocaleTimeString('ru-RU')}</span>
                                 </div>

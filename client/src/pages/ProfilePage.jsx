@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetchMe, fetchGoals, updateGoals, fetchProfile, updateProfile, addWeight, fetchSummary } from '../api';
-
-const ACH_ICONS = {
-    first_activity: '🎯', sessions_10: '💪', sessions_50: '⭐', sessions_100: '👑',
-    steps_5k_day: '🚶', steps_10k_day: '👟', steps_20k_day: '🏃',
-    steps_50k_total: '📈', steps_100k_total: '🏅', steps_500k_total: '🌟', steps_1m_total: '💎',
-    calories_1k_total: '🔥', calories_10k_total: '🔥', calories_50k_total: '🌋',
-    streak_3: '📅', streak_7: '🗓️', streak_14: '🔥', streak_30: '🏆',
-    multisport: '🤸', multisport_4: '🎪',
-};
+import Icon from '../components/Icon';
+import { ACH_ICONS } from './DashboardPage';
 
 function nf(n) { return Number(n || 0).toLocaleString('ru-RU'); }
 
@@ -232,7 +225,7 @@ export default function ProfilePage({ onLogout }) {
                     <div className="ach-grid">
                         {achievements.map((a) => (
                             <div className="ach-card" key={a.code || a._id}>
-                                <span className="ach-card-icon">{ACH_ICONS[a.code] || '🏆'}</span>
+                                <span className="ach-card-icon"><Icon name={ACH_ICONS[a.code] || 'trophy'} size={26} /></span>
                                 <span className="ach-card-title">{a.title}</span>
                                 <span className="ach-card-date">{new Date(a.earnedAt).toLocaleDateString('ru-RU')}</span>
                             </div>

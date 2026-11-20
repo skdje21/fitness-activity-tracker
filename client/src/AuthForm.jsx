@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { login, register, saveToken, forgotPassword, resetPassword } from './api';
+import Icon from './components/Icon';
 
 
 function AuthForm({ onAuth }) {
@@ -82,7 +83,7 @@ function AuthForm({ onAuth }) {
         <div className="app">
             <div className="auth-wrap">
                 <div className="card auth-card">
-                    <div className="auth-logo">🏃</div>
+                    <div className="auth-logo"><Icon name="activity" size={28} /></div>
                     <h2>{titles[mode]}</h2>
                     <p className="auth-sub">Трекер физической активности</p>
                     <form onSubmit={handleSubmit} className="auth-form">

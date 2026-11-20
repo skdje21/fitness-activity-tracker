@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import NotificationFeed from '../NotificationFeed';
 import { fetchLeaderboard } from '../api';
+import Icon from '../components/Icon';
 
 const PERIODS = [
     { key: 'week', label: 'Неделя' },
@@ -8,7 +9,7 @@ const PERIODS = [
     { key: 'all', label: 'Всё время' },
 ];
 
-const MEDALS = ['🥇', '🥈', '🥉'];
+const MEDAL_COLORS = ['#fbbf24', '#cbd5e1', '#d8945f'];
 
 function nf(n) { return Number(n || 0).toLocaleString('ru-RU'); }
 
@@ -70,15 +71,19 @@ export default function FeedPage({ token }) {
                             const isMe = row.id === myId;
                             return (
                                 <div key={row.id} className={'lb-row' + (isMe ? ' lb-me' : '')}>
-                                    <span className="lb-rank">{MEDALS[i] || `#${i + 1}`}</span>
+                                    <span className="lb-rank">
+                                        {i < 3
+                                            ? <Icon name="award" size={20} style={{ color: MEDAL_COLORS[i] }} />
+                                            : `#${i + 1}`}
+                                    </span>
                                     <span className="lb-user">
                                         {row.name || maskEmail(row.email)}
                                         {isMe && <span className="lb-you">вы</span>}
                                     </span>
                                     <div className="lb-stats">
-                                        <span className="lb-stat">👟 {nf(row.totalSteps)}</span>
-                                        <span className="lb-stat">🔥 {nf(row.totalCalories)}</span>
-                                        <span className="lb-stat">📅 {row.activeDays} дн.</span>
+                                        <span className="lb-stat"><Icon name="footprints" size={14} /> {nf(row.totalSteps)}</span>
+                                        <span className="lb-stat"><Icon name="flame" size={14} /> {nf(row.totalCalories)}</span>
+                                        <span className="lb-stat"><Icon name="calendar" size={14} /> {row.activeDays} дн.</span>
                                     </div>
                                 </div>
                             );

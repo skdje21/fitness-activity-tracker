@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetchActivities, addActivity, updateActivity, deleteActivity } from '../api';
 import ActivityFormModal from '../components/ActivityFormModal';
+import Icon from '../components/Icon';
 
 function fmtDate(raw) {
     if (!raw) return '—';
@@ -114,7 +115,7 @@ export default function ActivitiesPage() {
     if (error) {
         return (
             <div className="error-screen">
-                <div className="error-icon">⚠️</div>
+                <div className="error-icon"><Icon name="alert" size={40} /></div>
                 <h2>Ошибка</h2>
                 <p>{error}</p>
                 <button className="btn btn-primary" onClick={() => { setLoading(true); load(search, page); }}>Повторить</button>
@@ -135,7 +136,7 @@ export default function ActivitiesPage() {
             <section className="card fade-in-up" style={{ animationDelay: '0.05s' }}>
                 <div className="controls">
                     <div className="search">
-                        <span className="search-icon">🔍</span>
+                        <span className="search-icon"><Icon name="search" size={16} /></span>
                         <input type="text" placeholder="Поиск по типу…" value={search} onChange={(e) => setSearch(e.target.value)} />
                     </div>
                     <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
@@ -147,7 +148,7 @@ export default function ActivitiesPage() {
 
                 {visible.length === 0 ? (
                     <div className="empty">
-                        <div className="empty-icon">📭</div>
+                        <div className="empty-icon"><Icon name="inbox" size={40} /></div>
                         <p>Записей не найдено</p>
                         <button className="btn btn-primary" onClick={() => setModal({ mode: 'add' })}>Добавить первую</button>
                     </div>
@@ -170,8 +171,8 @@ export default function ActivitiesPage() {
                                         <td className="num">{nf(a.steps)}</td>
                                         <td className="num">{nf(a.calories)}</td>
                                         <td className="actions">
-                                            <button className="icon-btn" title="Редактировать" onClick={() => setModal({ mode: 'edit', item: a })}>✎</button>
-                                            <button className="icon-btn danger" title="Удалить" onClick={() => setDeleteItem(a)}>🗑</button>
+                                            <button className="icon-btn" title="Редактировать" onClick={() => setModal({ mode: 'edit', item: a })}><Icon name="pencil" size={16} /></button>
+                                            <button className="icon-btn danger" title="Удалить" onClick={() => setDeleteItem(a)}><Icon name="trash" size={16} /></button>
                                         </td>
                                     </tr>
                                 ))}
@@ -204,7 +205,7 @@ export default function ActivitiesPage() {
             {deleteItem && (
                 <div className="modal-overlay" onClick={() => setDeleteItem(null)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-icon">🗑</div>
+                        <div className="modal-icon modal-icon-danger"><Icon name="trash" size={30} /></div>
                         <h3>Удалить запись?</h3>
                         <p className="modal-text">Запись «{deleteItem.type}» за {fmtDate(deleteItem.date)} будет удалена безвозвратно.</p>
                         <div className="modal-actions">

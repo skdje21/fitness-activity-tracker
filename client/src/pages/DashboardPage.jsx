@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchSummary, fetchActivities, fetchSeries, exportCSV } from '../api';
+import Icon from '../components/Icon';
 
-const ACH_ICONS = {
-    first_activity: '🎯', sessions_10: '💪', sessions_50: '⭐', sessions_100: '👑',
-    steps_5k_day: '🚶', steps_10k_day: '👟', steps_20k_day: '🏃',
-    steps_50k_total: '📈', steps_100k_total: '🏅', steps_500k_total: '🌟', steps_1m_total: '💎',
-    calories_1k_total: '🔥', calories_10k_total: '🔥', calories_50k_total: '🌋',
-    streak_3: '📅', streak_7: '🗓️', streak_14: '🔥', streak_30: '🏆',
-    multisport: '🤸', multisport_4: '🎪',
+export const ACH_ICONS = {
+    first_activity: 'target', sessions_10: 'award', sessions_50: 'star', sessions_100: 'crown',
+    steps_5k_day: 'footprints', steps_10k_day: 'footprints', steps_20k_day: 'activity',
+    steps_50k_total: 'trending', steps_100k_total: 'award', steps_500k_total: 'star', steps_1m_total: 'gem',
+    calories_1k_total: 'flame', calories_10k_total: 'flame', calories_50k_total: 'flame',
+    streak_3: 'calendar', streak_7: 'calendar', streak_14: 'flame', streak_30: 'trophy',
+    multisport: 'sparkles', multisport_4: 'sparkles',
 };
 const TYPE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#a855f7', '#ef4444', '#14b8a6'];
 const RANGES = [
@@ -70,7 +71,7 @@ export default function DashboardPage() {
     if (error) {
         return (
             <div className="error-screen">
-                <div className="error-icon">⚠️</div>
+                <div className="error-icon"><Icon name="alert" size={40} /></div>
                 <h2>Ошибка</h2>
                 <p>Не удалось загрузить статистику. Проверьте, запущен ли сервер.</p>
             </div>
@@ -90,7 +91,7 @@ export default function DashboardPage() {
                     <h2 className="page-title">Дашборд</h2>
                     <p className="subtitle">Обзор вашей активности</p>
                 </div>
-                <button className="btn btn-ghost" onClick={handleExportCSV} title="Скачать CSV">📥 Экспорт CSV</button>
+                <button className="btn btn-ghost btn-icon" onClick={handleExportCSV} title="Скачать CSV"><Icon name="download" size={16} /> Экспорт CSV</button>
             </section>
 
             {/* Итоги */}
@@ -123,7 +124,7 @@ export default function DashboardPage() {
                         <div className="ach-list">
                             {data.achievements.slice(0, 4).map((a) => (
                                 <div className="ach-badge" key={a.code || a._id} title={a.title}>
-                                    <span className="ach-icon">{ACH_ICONS[a.code] || '🏆'}</span>
+                                    <span className="ach-icon"><Icon name={ACH_ICONS[a.code] || 'trophy'} size={16} /></span>
                                     <span className="ach-title">{a.title}</span>
                                 </div>
                             ))}
@@ -346,7 +347,7 @@ function GoalBar({ label, value, goal, percent, color }) {
         <div className="goal-row">
             <div className="goal-top">
                 <span>{label}</span>
-                <span className="goal-nums">{nf(value)} / {nf(goal)} {reached ? '✅' : `(${percent}%)`}</span>
+                <span className="goal-nums">{nf(value)} / {nf(goal)} {reached ? <Icon name="check" size={14} className="goal-done" /> : `(${percent}%)`}</span>
             </div>
             <div className="goal-track">
                 <div className="goal-fill" style={{ width: `${width}%`, background: color }} />
