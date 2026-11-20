@@ -10,6 +10,7 @@ const dashboardRouter = require('./routes/dashboard');
 const connectMongo = require('./db/mongoose');
 const { connectRedis } = require('./db/redis');
 const setupSocket = require('./socket/notifications');
+const helmet = require('helmet');
 const authMiddleware = require('./middleware/auth');
 const setupSwagger = require('./swagger');
 
@@ -21,6 +22,7 @@ const io = new Server(server, { cors: { origin: '*' } });
 setupSocket(io); 
 
 
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
@@ -75,3 +77,5 @@ async function start() {
 }
 
 start();
+
+module.exports = app;
