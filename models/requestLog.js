@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('./pzActivity'); // переиспользуем то же подключение к БД
+const { sequelize } = require('./pzActivity'); 
 
 // Таблица журнала запросов
 const RequestLog = sequelize.define('RequestLog', {
@@ -17,9 +17,11 @@ const RequestLog = sequelize.define('RequestLog', {
     durationMs: {         
         type: DataTypes.INTEGER,
     },
-    // поле createdAt (время запроса) Sequelize добавляет автоматически
+    // поле createdAt (время создания записи лога) Sequelize добавляет автоматически
 }, {
     tableName: 'RequestLogs',
+    timestamps: true,       
+    updatedAt: false,      
 });
 
 module.exports = { RequestLog };
