@@ -1,12 +1,17 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const rules = require('../config/validation.json');
 
-const sequelize = new Sequelize('fitness_tracker', 'postgres', 'postgres', {
-    host: '127.0.0.1',
-    port: 5432,
-    dialect: 'postgres',
-    logging: false, // не засорять консоль SQL-запросами
-});
+const sequelize = new Sequelize(
+    process.env.PG_DATABASE || 'fitness_tracker',
+    process.env.PG_USER || 'postgres',
+    process.env.PG_PASSWORD || 'postgres',
+    {
+        host: process.env.PG_HOST || '127.0.0.1',
+        port: Number(process.env.PG_PORT) || 5432,
+        dialect: 'postgres',
+        logging: false, // не засорять консоль SQL-запросами
+    }
+);
 
 const PzActivity = sequelize.define('PzActivity', {
     date: {

@@ -3,18 +3,18 @@ const { sequelize } = require('./pzActivity'); // переиспользуем �
 
 // Таблица журнала запросов
 const RequestLog = sequelize.define('RequestLog', {
-    method: {               // HTTP-метод (GET, POST, ...)
+    method: {               
         type: DataTypes.STRING,
         allowNull: false,
     },
-    url: {                  // запрошенный адрес
+    url: {                 
         type: DataTypes.STRING,
         allowNull: false,
     },
-    statusCode: {           // статус ответа (200, 302, 404, 500, ...)
+    statusCode: {           
         type: DataTypes.INTEGER,
     },
-    durationMs: {           // длительность обработки в миллисекундах
+    durationMs: {         
         type: DataTypes.INTEGER,
     },
     // поле createdAt (время запроса) Sequelize добавляет автоматически

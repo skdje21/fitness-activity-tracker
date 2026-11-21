@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const path = require('path');
 const express = require('express');
 
@@ -7,7 +9,7 @@ const fakeAuth = require('./middleware/fakeAuth');
 const { sequelize, PzActivity } = require('./models/pzActivity');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // --- Настройка шаблонизатора EJS ---
 app.set('view engine', 'ejs');
