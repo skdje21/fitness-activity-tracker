@@ -37,6 +37,17 @@ app.use((req, res) => {
 // --- Middleware обработки 500 (четыре параметра — обязательно) ---
 app.use((err, req, res, next) => {
     console.error('[ERROR]', err.stack);
+
+    // Некорректное или слишком большое тело запроса (например, вставка
+    // огромной строки в поле) — это ошибка клиента, а не сбой сервера.
+    // Отдаём понятный статус 400 вместо пугающей 500.
+    if (err.type === 'entity.too.large' || err.type === 'entity.parse.failed' || err.status === 400) {
+        return res.status(400).render('500', {
+            title: 'Некорректный запрос',
+            message: 'Переданные данные слишком велики или имеют неверный формат.'
+        });
+    }
+
     res.status(500).render('500', {
         title: 'Ошибка сервера',
         message: err.message

@@ -1,6 +1,7 @@
 const express = require('express');
 const { PzActivity } = require('../models/pzActivity');
 const requireAuth = require('../middleware/requireAuth');
+const logGuard = require('../middleware/logGuard');
 const rules = require('../config/validation.json');
 
 const router = express.Router();
@@ -26,7 +27,7 @@ router.get('/add', requireAuth, (req, res) => {
 });
 
 // POST /add — добавление записи в БД
-router.post('/add', requireAuth, async (req, res, next) => {
+router.post('/add', requireAuth, logGuard, async (req, res, next) => {
     try {
         const date = (req.body.date || '').trim();
         const stepsRaw = (req.body.steps || '').toString().trim();
