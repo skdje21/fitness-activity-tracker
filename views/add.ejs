@@ -5,7 +5,8 @@
 <form action="/add?auth=1" method="POST" class="form" novalidate>
     <div class="field <%= errors && errors.date ? 'field-error' : '' %>">
         <label for="date">Дата</label>
-        <input type="date" name="date" id="date" value="<%= values ? values.date : '' %>">
+        <input type="date" name="date" id="date" min="2000-01-01"
+               value="<%= values ? values.date : '' %>">
         <% if (errors && errors.date) { %>
             <span class="field-msg"><%= errors.date %></span>
         <% } %>
@@ -20,7 +21,7 @@
         <% } %>
     </div>
     <div class="field <%= errors && errors.calories ? 'field-error' : '' %>">
-        <label for="calories">Калории</label>
+        <label for="calories">Калории, кКал</label>
         <input type="text" inputmode="decimal" pattern="\d*([.,]\d+)?" maxlength="6"
                name="calories" id="calories" autocomplete="off"
                value="<%= values ? values.calories : '' %>">
@@ -49,6 +50,10 @@
     var calories = document.getElementById('calories');
     steps.addEventListener('input', function () { sanitize(steps, false); });
     calories.addEventListener('input', function () { sanitize(calories, true); });
+
+    // Ограничиваем поле даты: не позже сегодняшнего дня
+    var dateEl = document.getElementById('date');
+    if (dateEl) dateEl.max = new Date().toISOString().slice(0, 10);
 </script>
 
 <%- include('partials/footer') %>

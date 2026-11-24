@@ -7,6 +7,9 @@ function fakeAuth(req, res, next) {
     }
 
     res.locals.user = req.user;
+    // Суффикс для ссылок, чтобы сохранять "авторизацию" (?auth=1) при переходах.
+    // Для гостя — пустая строка.
+    res.locals.authQuery = req.user.role === 'user' ? '?auth=1' : '';
 
     next();
 }

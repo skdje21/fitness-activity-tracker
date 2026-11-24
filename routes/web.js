@@ -35,7 +35,21 @@ router.post('/add', requireAuth, logGuard, async (req, res, next) => {
         const values = { date, steps: stepsRaw, calories: caloriesRaw };
         const errors = {};
 
-        if (!date) errors.date = 'Укажите дату';
+        if (!date) {
+            errors.date = 'Укажите дату';
+        } else if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) {
+            // формат строго ГГГГ-ММ-ДД (ровно 4 цифры года) и реальная дата
+            errors.date = 'Некорректная дата';
+        } else {
+            // Сравниваем как строки YYYY-MM-DD (лексикографически = хронологически),
+            // чтобы избежать расхождений из-за часового пояса.
+            const todayStr = new Date().toLocaleDateString('en-CA'); // локальная дата в формате YYYY-MM-DD
+            if (date < rules.date.min) {
+                errors.date = `Дата не раньше ${rules.date.min}`;
+            } else if (date > todayStr) {
+                errors.date = 'Дата не может быть в будущем';
+            }
+        }
         if (!stepsRaw) {
             errors.steps = 'Введите количество шагов';
         } else if (stepsRaw.length > rules.steps.maxLength) {
