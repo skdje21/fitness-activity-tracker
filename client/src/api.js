@@ -71,6 +71,25 @@ export const forgotPassword = (email) => api.post('/auth/forgot-password', { ema
 export const resetPassword = (email, code, newPassword) =>
     api.post('/auth/reset-password', { email, code, newPassword });
 
+// ---------- Админ-панель ----------
+export const fetchAdminOverview = () => api.get('/admin/overview');
+
+export const fetchAdminUsers = (params = {}) => api.get('/admin/users', { params });
+
+export const fetchAdminUser = (id) => api.get(`/admin/users/${id}`);
+
+export const setUserBlocked = (id, isBlocked) => api.patch(`/admin/users/${id}/block`, { isBlocked });
+
+export const setUserRole = (id, role) => api.patch(`/admin/users/${id}/role`, { role });
+
+export const unlockUser = (id) => api.post(`/admin/users/${id}/unlock`);
+
+export const deleteUser = (id) => api.delete(`/admin/users/${id}`);
+
+export const fetchAdminActivities = (params = {}) => api.get('/admin/activities', { params });
+
+export const deleteAdminActivity = (id) => api.delete(`/admin/activities/${id}`);
+
 export function saveToken(token) {
     localStorage.setItem('token', token);
 }

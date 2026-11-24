@@ -7,11 +7,13 @@ const authRouter = require('./routes/auth');
 const activitiesRouter = require('./routes/activities');
 const mongoRouter = require('./routes/mongo');
 const dashboardRouter = require('./routes/dashboard');
+const adminRouter = require('./routes/admin');
 const connectMongo = require('./db/mongoose');
 const { connectRedis } = require('./db/redis');
 const setupSocket = require('./socket/notifications');
 const helmet = require('helmet');
 const authMiddleware = require('./middleware/auth');
+const isAdmin = require('./middleware/isAdmin');
 const setupSwagger = require('./swagger');
 
 const app = express();
@@ -46,6 +48,8 @@ app.use('/auth', authRouter);
 app.use('/activities', authMiddleware, activitiesRouter);
 app.use('/mongo', authMiddleware, mongoRouter);
 app.use('/dashboard', authMiddleware, dashboardRouter);
+// Админ-панель: доступна только пользователям с ролью admin
+app.use('/admin', authMiddleware, isAdmin, adminRouter);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Маршрут не найден' });

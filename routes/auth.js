@@ -149,6 +149,10 @@ router.post('/login', async (req, res, next) => {
             return res.status(401).json({ error: 'Неверный email или пароль' });
         }
 
+        if (user.isBlocked) {
+            return res.status(403).json({ error: 'Аккаунт заблокирован администратором' });
+        }
+
         if (user.lockUntil && user.lockUntil > new Date()) {
             const secondsLeft = Math.ceil((user.lockUntil - new Date()) / 1000);
             return res.status(423).json({
@@ -175,7 +179,7 @@ router.post('/login', async (req, res, next) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, name: user.name || null },
+            { id: user.id, email: user.email, name: user.name || null, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
@@ -192,7 +196,7 @@ router.get('/profile', authMiddleware, async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
-        res.status(200).json({ id: user.id, email: user.email, name: user.name });
+        res.status(200).json({ id: user.id, email: user.email, name: user.name, role: user.role });
     } catch (error) {
         next(error);
     }

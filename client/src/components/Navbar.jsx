@@ -9,6 +9,8 @@ const LINKS = [
 ];
 
 export default function Navbar({ onLogout }) {
+    const links = LINKS;
+
     return (
         <header className="navbar">
             <div className="navbar-brand">
@@ -16,7 +18,7 @@ export default function Navbar({ onLogout }) {
             </div>
 
             <nav className="navbar-links">
-                {LINKS.map((l) => (
+                {links.map((l) => (
                     <NavLink
                         key={l.to}
                         to={l.to}

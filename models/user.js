@@ -36,6 +36,18 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
     },
+    // Роль: 'user' — обычный пользователь, 'admin' — администратор платформы
+    role: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: 'user',
+    },
+    // Бан администратором (в отличие от временного lockUntil при брутфорсе)
+    isBlocked: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
 }, {
     sequelize,
     modelName: 'User',

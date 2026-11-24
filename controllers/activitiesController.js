@@ -23,6 +23,11 @@ function validatePayload(body) {
     if (type != null && (typeof type !== 'string' || type.trim() === '' || type.length > LIMITS.typeLen)) {
         return `Поле "type" обязательно и не длиннее ${LIMITS.typeLen} символов`;
     }
+    // U+FFFD означает, что клиент прислал текст не в UTF-8 — такие данные
+    // нечитаемы и неисправимы, поэтому отклоняем их на входе.
+    if (typeof type === 'string' && type.includes('�')) {
+        return 'Поле "type" содержит нечитаемые символы — отправьте текст в кодировке UTF-8';
+    }
     // Шаги: целое, 0..200000
     if (!Number.isInteger(steps) || steps < 0) {
         return 'Поле "steps" должно быть целым неотрицательным числом';

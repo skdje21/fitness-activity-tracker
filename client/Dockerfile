@@ -1,7 +1,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+# npm-баг с опциональными нативными зависимостями (Rolldown/Vite 8) при сборке
+# из lock-файла, созданного на другой ОС: пересобираем зависимости под платформу контейнера.
+RUN rm -f package-lock.json && npm install
 COPY . .
 
 ARG VITE_API_URL
