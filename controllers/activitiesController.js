@@ -19,6 +19,14 @@ function validatePayload(body) {
     if (Number.isNaN(new Date(date).getTime())) {
         return 'Некорректная дата';
     }
+    // Активность нельзя записать «наперёд»: сегодня — максимум.
+    // Сравниваем строки ГГГГ-ММ-ДД, чтобы не зависеть от часового пояса сервера.
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    if (date > todayStr) {
+        return 'Дата не может быть позже сегодняшней';
+    }
     // Тип: строка разумной длины
     if (type != null && (typeof type !== 'string' || type.trim() === '' || type.length > LIMITS.typeLen)) {
         return `Поле "type" обязательно и не длиннее ${LIMITS.typeLen} символов`;

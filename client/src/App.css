@@ -445,7 +445,7 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
-    z-index: 100;
+    z-index: 300;
     animation: fade .2s var(--ease-out);
 }
 
@@ -527,7 +527,7 @@
     font-size: 14px;
     font-weight: 500;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-    z-index: 200;
+    z-index: 400;
     animation: slideUp .2s ease;
 }
 
@@ -1360,6 +1360,16 @@
 }
 .admin-user-email { font-size: 12px; color: var(--muted-2); }
 .admin-status { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* --- Кликабельная строка таблицы (открывает карточку) --- */
+.row-clickable { cursor: pointer; }
+@media (hover: hover) and (pointer: fine) {
+    .row-clickable:hover { background: var(--card-2); }
+}
+.row-clickable:active { background: var(--elevated); }
+
+/* Прочерк вместо нуля там, где значение неприменимо */
+.cell-empty { color: var(--muted-2); }
 
 /* --- Подозрительные записи (анти-чит) --- */
 .row-suspicious { background: rgba(245, 158, 11, 0.06); }

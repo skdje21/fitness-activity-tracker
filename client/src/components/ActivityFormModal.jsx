@@ -1,11 +1,18 @@
 import { useState } from 'react';
+import Portal from './Portal';
+import { ACTIVITY_TYPES as TYPES } from '../constants/activityTypes';
 
-const TYPES = ['Бег', 'Ходьба', 'Велосипед', 'Хайкинг', 'Плавание', 'Другое'];
+// Сегодняшняя дата в формате ГГГГ-ММ-ДД по локальному времени
+function todayISO() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 export default function ActivityFormModal({ initial, onClose, onSubmit }) {
     const editing = !!initial;
     const [date, setDate] = useState(initial ? initial.date : '');
-    const [type, setType] = useState(initial ? initial.type : 'Бег');
+    const [type, setType] = useState(initial ? initial.type : TYPES[0]);
     const [steps, setSteps] = useState(initial ? String(initial.steps) : '');
     const [calories, setCalories] = useState(initial ? String(initial.calories) : '');
     const [errors, setErrors] = useState({});
@@ -15,6 +22,7 @@ export default function ActivityFormModal({ initial, onClose, onSubmit }) {
         const f = { date: fields?.date ?? date, type: fields?.type ?? type, steps: fields?.steps ?? steps, calories: fields?.calories ?? calories };
         const e = {};
         if (!f.date) e.date = 'Обязательное поле';
+        else if (f.date > todayISO()) e.date = 'Нельзя выбрать будущую дату';
         if (!f.type) e.type = 'Выберите тип';
         if (f.steps === '') e.steps = 'Обязательное поле';
         else if (Number(f.steps) < 0) e.steps = 'Не может быть отрицательным';
@@ -46,13 +54,14 @@ export default function ActivityFormModal({ initial, onClose, onSubmit }) {
     }
 
     return (
+        <Portal>
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal modal-form" onClick={(e) => e.stopPropagation()}>
                 <h3>{editing ? 'Редактирование активности' : 'Новая активность'}</h3>
                 <form className="form" onSubmit={submit} noValidate>
                     <div className="field">
                         <label>Дата</label>
-                        <input type="date" value={date} className={touched.date && errors.date ? 'field-invalid' : ''}
+                        <input type="date" value={date} max={todayISO()} className={touched.date && errors.date ? 'field-invalid' : ''}
                             onChange={(e) => { setDate(e.target.value); if (touched.date) setErrors(validate({ date: e.target.value })); }}
                             onBlur={() => blur('date')} />
                         {fieldErr('date')}
@@ -88,5 +97,6 @@ export default function ActivityFormModal({ initial, onClose, onSubmit }) {
                 </form>
             </div>
         </div>
+        </Portal>
     );
 }

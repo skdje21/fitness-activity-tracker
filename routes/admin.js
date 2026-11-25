@@ -15,7 +15,8 @@ const USER_SORTS = {
     createdAt: 'u."createdAt" DESC',
     activity: '"activityCount" DESC',
     steps: '"totalSteps" DESC',
-    email: 'u.email ASC',
+    // Пользователи без имени уходят в конец, иначе они забивают начало списка
+    name: 'u.name ASC NULLS LAST',
 };
 
 function intParam(value, def, min, max) {

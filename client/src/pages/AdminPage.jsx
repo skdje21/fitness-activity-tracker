@@ -6,6 +6,7 @@ import {
     fetchAdminActivities, deleteAdminActivity,
 } from '../api';
 import Icon from '../components/Icon';
+import Portal from '../components/Portal';
 import { SeriesChart, DonutChart } from '../components/Charts';
 
 const TYPE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#a855f7', '#ef4444', '#14b8a6'];
@@ -21,7 +22,7 @@ const USER_SORTS = [
     { key: 'createdAt', label: 'Сортировка: новые' },
     { key: 'activity', label: 'Сортировка: по активностям' },
     { key: 'steps', label: 'Сортировка: по шагам' },
-    { key: 'email', label: 'Сортировка: по email' },
+    { key: 'name', label: 'Сортировка: по имени (А-Я)' },
 ];
 
 function nf(n) { return Number(n || 0).toLocaleString('ru-RU'); }
@@ -263,7 +264,12 @@ function UsersTab({ me, onNotice }) {
                                         const isMe = me && u.id === me.id;
                                         const locked = u.lockUntil && new Date(u.lockUntil) > new Date();
                                         return (
-                                            <tr key={u.id}>
+                                            <tr
+                                                key={u.id}
+                                                className="row-clickable"
+                                                onClick={() => setDetailId(u.id)}
+                                                title="Открыть карточку пользователя"
+                                            >
                                                 <td>
                                                     <div className="admin-user-cell">
                                                         <span className="admin-user-name">
@@ -282,12 +288,16 @@ function UsersTab({ me, onNotice }) {
                                                         {locked && <span className="chip chip-warn">вход закрыт</span>}
                                                     </div>
                                                 </td>
-                                                <td className="num">{nf(u.activityCount)}</td>
-                                                <td className="num">{nf(u.totalSteps)}</td>
+                                                <td className="num">
+                                                    {u.role === 'admin' ? <span className="cell-empty">—</span> : nf(u.activityCount)}
+                                                </td>
+                                                <td className="num">
+                                                    {u.role === 'admin' ? <span className="cell-empty">—</span> : nf(u.totalSteps)}
+                                                </td>
                                                 <td>{fmtDate(u.createdAt)}</td>
-                                                <td className="actions">
+                                                <td className="actions" onClick={(e) => e.stopPropagation()}>
                                                     <button className="icon-btn" title="Детали" onClick={() => setDetailId(u.id)}>
-                                                        <Icon name="search" size={15} />
+                                                        <Icon name="info" size={15} />
                                                     </button>
                                                     <button
                                                         className="icon-btn"
@@ -350,25 +360,27 @@ function UsersTab({ me, onNotice }) {
             {detailId && <UserDetailModal id={detailId} onClose={() => setDetailId(null)} />}
 
             {confirm && (
-                <div className="modal-overlay" onClick={() => setConfirm(null)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-icon modal-icon-danger"><Icon name="trash" size={30} /></div>
-                        <h3>Удалить пользователя?</h3>
-                        <p className="modal-text">
-                            Аккаунт <b>{confirm.email}</b> и все его данные (активности, профиль,
-                            достижения, история веса) будут удалены безвозвратно.
-                        </p>
-                        <div className="modal-actions">
-                            <button className="btn btn-ghost" onClick={() => setConfirm(null)}>Отмена</button>
-                            <button
-                                className="btn btn-danger"
-                                onClick={() => { const u = confirm; setConfirm(null); act(() => deleteUser(u.id), 'Пользователь удалён'); }}
-                            >
-                                Удалить
-                            </button>
+                <Portal>
+                    <div className="modal-overlay" onClick={() => setConfirm(null)}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-icon modal-icon-danger"><Icon name="trash" size={30} /></div>
+                            <h3>Удалить пользователя?</h3>
+                            <p className="modal-text">
+                                Аккаунт <b>{confirm.email}</b> и все его данные (активности, профиль,
+                                достижения, история веса) будут удалены безвозвратно.
+                            </p>
+                            <div className="modal-actions">
+                                <button className="btn btn-ghost" onClick={() => setConfirm(null)}>Отмена</button>
+                                <button
+                                    className="btn btn-danger"
+                                    onClick={() => { const u = confirm; setConfirm(null); act(() => deleteUser(u.id), 'Пользователь удалён'); }}
+                                >
+                                    Удалить
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </Portal>
             )}
         </>
     );
@@ -390,6 +402,7 @@ function UserDetailModal({ id, onClose }) {
     }, [id]);
 
     return (
+        <Portal>
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
                 <button className="modal-close icon-btn" onClick={onClose} title="Закрыть">
@@ -492,6 +505,7 @@ function UserDetailModal({ id, onClose }) {
                 )}
             </div>
         </div>
+        </Portal>
     );
 }
 
@@ -642,24 +656,26 @@ function ActivitiesTab({ onNotice }) {
             </section>
 
             {confirm && (
-                <div className="modal-overlay" onClick={() => setConfirm(null)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-icon modal-icon-danger"><Icon name="trash" size={30} /></div>
-                        <h3>Удалить активность?</h3>
-                        <p className="modal-text">
-                            Запись «{confirm.type}» ({nf(confirm.steps)} шагов) пользователя <b>{confirm.email}</b> будет удалена.
-                        </p>
-                        <div className="modal-actions">
-                            <button className="btn btn-ghost" onClick={() => setConfirm(null)}>Отмена</button>
-                            <button
-                                className="btn btn-danger"
-                                onClick={() => { const a = confirm; setConfirm(null); remove(a); }}
-                            >
-                                Удалить
-                            </button>
+                <Portal>
+                    <div className="modal-overlay" onClick={() => setConfirm(null)}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-icon modal-icon-danger"><Icon name="trash" size={30} /></div>
+                            <h3>Удалить активность?</h3>
+                            <p className="modal-text">
+                                Запись «{confirm.type}» ({nf(confirm.steps)} шагов) пользователя <b>{confirm.email}</b> будет удалена.
+                            </p>
+                            <div className="modal-actions">
+                                <button className="btn btn-ghost" onClick={() => setConfirm(null)}>Отмена</button>
+                                <button
+                                    className="btn btn-danger"
+                                    onClick={() => { const a = confirm; setConfirm(null); remove(a); }}
+                                >
+                                    Удалить
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </Portal>
             )}
         </>
     );

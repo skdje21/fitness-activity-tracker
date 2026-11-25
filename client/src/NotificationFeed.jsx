@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import Icon from './components/Icon';
+import { ACTIVITY_TYPES } from './constants/activityTypes';
 
 const ICONS = {
     join: { name: 'check-circle', color: 'var(--primary)' },
@@ -24,7 +25,7 @@ export default function NotificationFeed({ token }) {
     const [notes, setNotes] = useState([]);
     const [online, setOnline] = useState(0);
     const [steps, setSteps] = useState('');
-    const [type, setType] = useState('Бег');
+    const [type, setType] = useState(ACTIVITY_TYPES[0]);
     const socketRef = useRef(null);
     const feedRef = useRef(null);
 
@@ -79,10 +80,7 @@ export default function NotificationFeed({ token }) {
                             <div className="field">
                                 <label>Тип активности</label>
                                 <select value={type} onChange={e => setType(e.target.value)}>
-                                    <option>Бег</option>
-                                    <option>Ходьба</option>
-                                    <option>Велосипед</option>
-                                    <option>Хайкинг</option>
+                                    {ACTIVITY_TYPES.map((t) => <option key={t}>{t}</option>)}
                                 </select>
                             </div>
                             <div className="field">

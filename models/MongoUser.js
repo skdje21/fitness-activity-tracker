@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 // ---------- Вложенная схема: статистика по типу активности ----------
 const typeStatSchema = new mongoose.Schema({
-    type:          { type: String, required: true },   // Бег, Ходьба, Велосипед, Хайкинг
+    type:          { type: String, required: true },   // Ходьба, Бег, Хайкинг, Скандинавская ходьба, Подъём по лестнице, Другое
     totalSteps:    { type: Number, default: 0 },
     totalCalories: { type: Number, default: 0 },
     totalMinutes:  { type: Number, default: 0 },

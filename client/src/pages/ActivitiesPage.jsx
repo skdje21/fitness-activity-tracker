@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { fetchActivities, addActivity, updateActivity, deleteActivity } from '../api';
 import ActivityFormModal from '../components/ActivityFormModal';
 import Icon from '../components/Icon';
+import Portal from '../components/Portal';
 
 function fmtDate(raw) {
     if (!raw) return '—';
@@ -203,17 +204,19 @@ export default function ActivitiesPage() {
             )}
 
             {deleteItem && (
-                <div className="modal-overlay" onClick={() => setDeleteItem(null)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-icon modal-icon-danger"><Icon name="trash" size={30} /></div>
-                        <h3>Удалить запись?</h3>
-                        <p className="modal-text">Запись «{deleteItem.type}» за {fmtDate(deleteItem.date)} будет удалена безвозвратно.</p>
-                        <div className="modal-actions">
-                            <button className="btn btn-ghost" onClick={() => setDeleteItem(null)}>Отмена</button>
-                            <button className="btn btn-danger" onClick={confirmDelete}>Удалить</button>
+                <Portal>
+                    <div className="modal-overlay" onClick={() => setDeleteItem(null)}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-icon modal-icon-danger"><Icon name="trash" size={30} /></div>
+                            <h3>Удалить запись?</h3>
+                            <p className="modal-text">Запись «{deleteItem.type}» за {fmtDate(deleteItem.date)} будет удалена безвозвратно.</p>
+                            <div className="modal-actions">
+                                <button className="btn btn-ghost" onClick={() => setDeleteItem(null)}>Отмена</button>
+                                <button className="btn btn-danger" onClick={confirmDelete}>Удалить</button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </Portal>
             )}
 
             {notice && <div className={'notice' + (notice.ok ? ' notice-ok' : '')}>{notice.msg}</div>}

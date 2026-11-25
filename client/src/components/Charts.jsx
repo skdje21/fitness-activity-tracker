@@ -11,8 +11,9 @@ export function SeriesChart({ data, metric, range, unit }) {
     const [hover, setHover] = useState(null);
     if (!data || data.length === 0) return <p className="subtitle">Нет данных за период</p>;
 
-    const W = 700, H = 180, PX = 40, PY = 20;
-    const plotW = W - PX * 2, plotH = H - PY * 2;
+    // Сверху оставляем больше воздуха, чем снизу: туда всплывает подсказка
+    const W = 700, H = 180, PX = 40, PY_TOP = 36, PY_BOT = 20;
+    const plotW = W - PX * 2, plotH = H - PY_TOP - PY_BOT;
     const vals = data.map(d => d[metric] || 0);
     const maxVal = Math.max(1, ...vals);
     const barW = Math.max(4, Math.min(24, (plotW / data.length) - 2));
@@ -30,7 +31,7 @@ export function SeriesChart({ data, metric, range, unit }) {
         <div className="series-chart-wrap">
             <svg viewBox={`0 0 ${W} ${H}`} className="series-chart-svg">
                 {[0, 0.25, 0.5, 0.75, 1].map(f => {
-                    const y = PY + plotH - f * plotH;
+                    const y = PY_TOP + plotH - f * plotH;
                     return (
                         <g key={f}>
                             <line x1={PX} y1={y} x2={W - PX} y2={y} stroke="var(--border)" strokeWidth="0.5" />
@@ -43,7 +44,7 @@ export function SeriesChart({ data, metric, range, unit }) {
                     const x = PX + (i + 0.5) * (plotW / data.length);
                     const v = d[metric] || 0;
                     const h = (v / maxVal) * plotH;
-                    const y = PY + plotH - h;
+                    const y = PY_TOP + plotH - h;
                     return (
                         <g key={d.date}
                            onMouseEnter={() => setHover({ i, x, y, v, date: d.date })}
@@ -61,12 +62,19 @@ export function SeriesChart({ data, metric, range, unit }) {
                     );
                 })}
 
-                {hover && (
-                    <g>
-                        <rect x={hover.x - 50} y={hover.y - 30} width={100} height={22} rx={6} fill="var(--card)" stroke="var(--border)" />
-                        <text x={hover.x} y={hover.y - 15} textAnchor="middle" fill="var(--text)" fontSize="11" fontWeight="600">{nf(hover.v)} {metricLabel}</text>
-                    </g>
-                )}
+                {hover && (() => {
+                    // Держим подсказку внутри области графика: у максимального столбца
+                    // она иначе уезжает за верхний край, у крайних — за боковые
+                    const TW = 100, TH = 22;
+                    const tx = Math.min(W - TW / 2 - 2, Math.max(TW / 2 + 2, hover.x));
+                    const ty = Math.max(2, hover.y - TH - 8);
+                    return (
+                        <g style={{ pointerEvents: 'none' }}>
+                            <rect x={tx - TW / 2} y={ty} width={TW} height={TH} rx={6} fill="var(--card)" stroke="var(--border)" />
+                            <text x={tx} y={ty + 15} textAnchor="middle" fill="var(--text)" fontSize="11" fontWeight="600">{nf(hover.v)} {metricLabel}</text>
+                        </g>
+                    );
+                })()}
             </svg>
         </div>
     );
