@@ -33,6 +33,7 @@ const PATHS = {
     close: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
     'user-check': <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><polyline points="16 11 18 13 22 9" /></>,
     info: <><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></>,
+    clock: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
 };
 
 export default function Icon({ name, size = 20, className = '', strokeWidth = 2, ...rest }) {

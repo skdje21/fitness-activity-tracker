@@ -896,6 +896,7 @@
     margin-bottom: 14px;
 }
 .card-head h3 { margin: 0; font-size: 16px; }
+.card-head-actions { display: flex; align-items: center; gap: 8px; }
 
 /* --- Переключатель периода --- */
 .range-btns { display: flex; gap: 4px; }

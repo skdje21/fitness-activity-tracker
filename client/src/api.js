@@ -90,6 +90,14 @@ export const fetchAdminActivities = (params = {}) => api.get('/admin/activities'
 
 export const deleteAdminActivity = (id) => api.delete(`/admin/activities/${id}`);
 
+export const fetchAdminLogs = (params = {}) => api.get('/admin/logs', { params });
+
+export const exportAdminUsers = (params = {}) =>
+    api.get('/admin/users/export', { params, responseType: 'blob' });
+
+export const exportAdminActivities = (params = {}) =>
+    api.get('/admin/activities/export', { params, responseType: 'blob' });
+
 export function saveToken(token) {
     localStorage.setItem('token', token);
 }

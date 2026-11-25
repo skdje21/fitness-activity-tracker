@@ -4,6 +4,7 @@ import {
     fetchAdminOverview, fetchAdminUsers, fetchAdminUser,
     setUserBlocked, setUserRole, unlockUser, deleteUser,
     fetchAdminActivities, deleteAdminActivity,
+    fetchAdminLogs, exportAdminUsers, exportAdminActivities,
 } from '../api';
 import Icon from '../components/Icon';
 import Portal from '../components/Portal';
@@ -16,7 +17,33 @@ const TABS = [
     { key: 'overview', label: 'Обзор', icon: 'trending' },
     { key: 'users', label: 'Пользователи', icon: 'users' },
     { key: 'activities', label: 'Модерация', icon: 'shield' },
+    { key: 'logs', label: 'Журнал', icon: 'clock' },
 ];
+
+// Скачивание blob-ответа как файла (переиспользуется для всех CSV-выгрузок).
+async function downloadBlob(promise, filename, onNotice) {
+    try {
+        const res = await promise;
+        const url = window.URL.createObjectURL(res.data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch {
+        onNotice?.({ msg: 'Не удалось выгрузить CSV', ok: false });
+    }
+}
+
+// Человекочитаемое описание действия админа для журнала.
+const LOG_ACTIONS = {
+    block: { label: 'Блокировка', cls: 'chip-danger' },
+    unblock: { label: 'Разблокировка', cls: 'chip-ok' },
+    role: { label: 'Смена роли', cls: 'chip-admin' },
+    unlock: { label: 'Снятие блок. входа', cls: 'chip-warn' },
+    delete_user: { label: 'Удаление пользователя', cls: 'chip-danger' },
+    delete_activity: { label: 'Удаление активности', cls: 'chip-danger' },
+};
 
 const USER_SORTS = [
     { key: 'createdAt', label: 'Сортировка: новые' },
@@ -32,6 +59,13 @@ function fmtDate(raw) {
     const d = new Date(raw);
     if (isNaN(d)) return '—';
     return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function fmtDateTime(raw) {
+    if (!raw) return '—';
+    const d = new Date(raw);
+    if (isNaN(d)) return '—';
+    return d.toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 export default function AdminPage({ me }) {
@@ -69,6 +103,7 @@ export default function AdminPage({ me }) {
             {tab === 'overview' && <OverviewTab onNotice={setNotice} />}
             {tab === 'users' && <UsersTab me={me} onNotice={setNotice} />}
             {tab === 'activities' && <ActivitiesTab onNotice={setNotice} />}
+            {tab === 'logs' && <LogsTab onNotice={setNotice} />}
 
             {notice && <div className={'notice' + (notice.ok ? ' notice-ok' : '')}>{notice.msg}</div>}
         </>
@@ -236,6 +271,13 @@ function UsersTab({ me, onNotice }) {
                     <select value={sort} onChange={(e) => setSort(e.target.value)}>
                         {USER_SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
                     </select>
+                    <button
+                        className="btn btn-ghost btn-icon"
+                        title="Скачать список в CSV"
+                        onClick={() => downloadBlob(exportAdminUsers({ search }), 'users.csv', onNotice)}
+                    >
+                        <Icon name="download" size={16} /> CSV
+                    </button>
                 </div>
 
                 {loading ? (
@@ -562,13 +604,28 @@ function ActivitiesTab({ onNotice }) {
             <section className="card">
                 <div className="card-head">
                     <h3>Активности всех пользователей</h3>
-                    <button
-                        className={'range-btn' + (String(minSteps) === String(SUSPICIOUS) ? ' active' : '')}
-                        onClick={() => setMinSteps(String(minSteps) === String(SUSPICIOUS) ? '' : String(SUSPICIOUS))}
-                        title="Показать записи с аномально большим числом шагов"
-                    >
-                        Только аномалии
-                    </button>
+                    <div className="card-head-actions">
+                        <button
+                            className={'range-btn' + (String(minSteps) === String(SUSPICIOUS) ? ' active' : '')}
+                            onClick={() => setMinSteps(String(minSteps) === String(SUSPICIOUS) ? '' : String(SUSPICIOUS))}
+                            title="Показать записи с аномально большим числом шагов"
+                        >
+                            Только аномалии
+                        </button>
+                        <button
+                            className="btn btn-ghost btn-icon"
+                            title="Скачать активности в CSV (с учётом фильтров)"
+                            onClick={() => downloadBlob(
+                                exportAdminActivities({
+                                    ...(type.trim() ? { type: type.trim() } : {}),
+                                    ...(minSteps ? { minSteps } : {}),
+                                }),
+                                'activities.csv', onNotice,
+                            )}
+                        >
+                            <Icon name="download" size={16} /> CSV
+                        </button>
+                    </div>
                 </div>
 
                 <div className="controls">
@@ -678,5 +735,96 @@ function ActivitiesTab({ onNotice }) {
                 </Portal>
             )}
         </>
+    );
+}
+
+/* ============================================================
+   Вкладка 4 — Журнал действий администраторов
+   ============================================================ */
+function LogsTab({ onNotice }) {
+    const [rows, setRows] = useState([]);
+    const [total, setTotal] = useState(0);
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(true);
+
+    const load = useCallback(async (p = 1) => {
+        setLoading(true);
+        try {
+            const r = await fetchAdminLogs({ page: p, limit: PAGE_SIZE });
+            setRows(r.data.data);
+            setTotal(r.data.total);
+            setPage(r.data.page);
+        } catch {
+            onNotice({ msg: 'Не удалось загрузить журнал', ok: false });
+        } finally {
+            setLoading(false);
+        }
+    }, [onNotice]);
+
+    useEffect(() => { load(1); }, [load]);
+
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+    return (
+        <section className="card">
+            <div className="card-head">
+                <h3>Журнал действий</h3>
+                <span className="subtitle">блокировки, роли и удаления — кто и когда</span>
+            </div>
+
+            {loading ? (
+                <div className="loader"><div className="spinner"></div><p>Загрузка…</p></div>
+            ) : rows.length === 0 ? (
+                <div className="empty">
+                    <div className="empty-icon"><Icon name="clock" size={40} /></div>
+                    <p>Журнал пуст — действий ещё не было</p>
+                </div>
+            ) : (
+                <>
+                    <div className="table-wrap">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Когда</th>
+                                    <th>Администратор</th>
+                                    <th>Действие</th>
+                                    <th>Объект</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map((l) => {
+                                    const a = LOG_ACTIONS[l.action] || { label: l.action, cls: '' };
+                                    return (
+                                        <tr key={l._id}>
+                                            <td>{fmtDateTime(l.createdAt)}</td>
+                                            <td>
+                                                <div className="admin-user-cell">
+                                                    <span className="admin-user-email">{l.adminEmail}</span>
+                                                </div>
+                                            </td>
+                                            <td><span className={'chip ' + a.cls}>{a.label}</span></td>
+                                            <td>
+                                                <div className="admin-user-cell">
+                                                    <span className="admin-user-name">{l.targetLabel || l.targetId}</span>
+                                                    {l.details && <span className="admin-user-email">{l.details}</span>}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {totalPages > 1 && (
+                        <div className="pagination">
+                            <button className="btn btn-ghost" disabled={page <= 1} onClick={() => load(page - 1)}>← Назад</button>
+                            <span className="pagination-info">Страница {page} из {totalPages} · всего {nf(total)}</span>
+                            <button className="btn btn-ghost" disabled={page >= totalPages} onClick={() => load(page + 1)}>Вперёд →</button>
+                        </div>
+                    )}
+                </>
+            )}
+        </section>
     );
 }
