@@ -1186,17 +1186,23 @@
 .pagination {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 14px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-top: 16px;
     padding-top: 14px;
     border-top: 1px solid var(--border);
 }
 .pagination-info {
+    /* В разметке подпись стоит между кнопками; order выносит её перед ними,
+       чтобы справа кнопки читались единой парой. */
+    order: -1;
+    margin-right: 8px;
     font-size: 13px;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
 }
+.pagination .btn { padding: 8px 16px; font-size: 13px; }
 .pagination .btn:disabled {
     opacity: 0.35;
     cursor: default;
@@ -1430,7 +1436,9 @@
     .modal-form .field input,
     .modal-form .field select { font-size: 16px; }
 
-    .pagination { gap: 8px; flex-wrap: wrap; justify-content: center; }
+    /* Узкий экран: подпись переносится на свою строку только если не помещается */
+    .pagination { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .pagination-info { text-align: right; }
     .pagination .btn { padding: 8px 14px; font-size: 13px; }
 
     .ach-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
