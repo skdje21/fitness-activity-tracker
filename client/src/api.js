@@ -31,6 +31,8 @@ api.interceptors.response.use(
 export const fetchActivities = (search = '', page = 1, limit = 20) =>
     api.get('/activities', { params: { ...(search ? { search } : {}), page, limit } });
 
+export const fetchActivityTypes = () => api.get('/activities/types');
+
 export const addActivity = (activity) => api.post('/activities', activity);
 
 export const updateActivity = (id, updated) => api.put(`/activities/${id}`, updated);

@@ -25,6 +25,8 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // Активность принадлежит пользователю
       Activity.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      // Тип активности — ссылка на справочник по названию
+      Activity.belongsTo(models.ActivityType, { foreignKey: 'type', targetKey: 'name', as: 'activityType' });
     }
 
     toJSON() {

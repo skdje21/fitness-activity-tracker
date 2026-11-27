@@ -1,4 +1,4 @@
-const { Activity, Sequelize } = require('../models');
+const { Activity, ActivityType, Sequelize } = require('../models');
 const { safeRecompute } = require('../services/statsService');
 const { cacheDel } = require('../db/redis');
 
@@ -59,6 +59,24 @@ function validatePayload(body) {
     return null;
 }
 
+// Список типов активности из справочника (для выпадающих списков на клиенте)
+async function getTypes(req, res, next) {
+    try {
+        const types = await ActivityType.findAll({ order: [['sortOrder', 'ASC'], ['name', 'ASC']] });
+        res.status(200).json({ data: types.map((t) => t.name) });
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Тип обязан существовать в справочнике — это же гарантирует и внешний ключ,
+// но явная проверка даёт понятное сообщение вместо ошибки БД.
+async function assertTypeExists(type) {
+    if (type == null) return null;
+    const found = await ActivityType.findByPk(type);
+    return found ? null : 'Неизвестный тип активности';
+}
+
 async function getActivities(req, res, next) {
     try {
         const { date, search } = req.query;
@@ -116,6 +134,10 @@ async function createActivity(req, res, next) {
         }
 
         const { date, type, steps, calories, duration } = req.body;
+        const typeError = await assertTypeExists(type);
+        if (typeError) {
+            return res.status(400).json({ error: typeError });
+        }
         const created = await Activity.create({ date, type, steps, calories, duration, userId: req.user.id });
         await safeRecompute(req.user.id);
         await cacheDel('leaderboard:*');
@@ -135,6 +157,10 @@ async function updateActivity(req, res, next) {
         }
 
         const { date, type, steps, calories, duration } = req.body;
+        const typeError = await assertTypeExists(type);
+        if (typeError) {
+            return res.status(400).json({ error: typeError });
+        }
         const [updatedCount] = await Activity.update(
             { date, type, steps, calories, duration },
             { where: { id, userId: req.user.id } }
@@ -167,6 +193,7 @@ async function deleteActivity(req, res, next) {
 }
 
 module.exports = {
+    getTypes,
     getActivities,
     getActivityById,
     createActivity,

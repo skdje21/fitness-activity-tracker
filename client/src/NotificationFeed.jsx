@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import Icon from './components/Icon';
 import { ACTIVITY_TYPES } from './constants/activityTypes';
+import { fetchActivityTypes } from './api';
 
 const ICONS = {
     join: { name: 'check-circle', color: 'var(--primary)' },
@@ -25,9 +26,19 @@ export default function NotificationFeed({ token }) {
     const [notes, setNotes] = useState([]);
     const [online, setOnline] = useState(0);
     const [steps, setSteps] = useState('');
+    // Типы из справочника в БД; константа — запасной вариант
+    const [types, setTypes] = useState(ACTIVITY_TYPES);
     const [type, setType] = useState(ACTIVITY_TYPES[0]);
     const socketRef = useRef(null);
     const feedRef = useRef(null);
+
+    useEffect(() => {
+        let alive = true;
+        fetchActivityTypes()
+            .then((r) => { if (alive && Array.isArray(r.data.data) && r.data.data.length) setTypes(r.data.data); })
+            .catch(() => { /* оставляем запасной список */ });
+        return () => { alive = false; };
+    }, []);
 
     const user = token ? userFromToken(token) : '';
 
@@ -80,7 +91,7 @@ export default function NotificationFeed({ token }) {
                             <div className="field">
                                 <label>Тип активности</label>
                                 <select value={type} onChange={e => setType(e.target.value)}>
-                                    {ACTIVITY_TYPES.map((t) => <option key={t}>{t}</option>)}
+                                    {types.map((t) => <option key={t}>{t}</option>)}
                                 </select>
                             </div>
                             <div className="field">

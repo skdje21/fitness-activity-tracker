@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Portal from './Portal';
-import { ACTIVITY_TYPES as TYPES } from '../constants/activityTypes';
+import { ACTIVITY_TYPES } from '../constants/activityTypes';
+import { fetchActivityTypes } from '../api';
 
 // Сегодняшняя дата в формате ГГГГ-ММ-ДД по локальному времени
 function todayISO() {
@@ -11,8 +12,19 @@ function todayISO() {
 
 export default function ActivityFormModal({ initial, onClose, onSubmit }) {
     const editing = !!initial;
+    // Список типов берём из справочника в БД; константа — запасной вариант,
+    // если запрос не прошёл.
+    const [types, setTypes] = useState(ACTIVITY_TYPES);
     const [date, setDate] = useState(initial ? initial.date : '');
-    const [type, setType] = useState(initial ? initial.type : TYPES[0]);
+    const [type, setType] = useState(initial ? initial.type : ACTIVITY_TYPES[0]);
+
+    useEffect(() => {
+        let alive = true;
+        fetchActivityTypes()
+            .then((r) => { if (alive && Array.isArray(r.data.data) && r.data.data.length) setTypes(r.data.data); })
+            .catch(() => { /* оставляем запасной список */ });
+        return () => { alive = false; };
+    }, []);
     const [steps, setSteps] = useState(initial ? String(initial.steps) : '');
     const [calories, setCalories] = useState(initial ? String(initial.calories) : '');
     const [errors, setErrors] = useState({});
@@ -69,7 +81,7 @@ export default function ActivityFormModal({ initial, onClose, onSubmit }) {
                     <div className="field">
                         <label>Тип активности</label>
                         <select value={type} onChange={(e) => setType(e.target.value)} onBlur={() => blur('type')}>
-                            {TYPES.map((t) => <option key={t}>{t}</option>)}
+                            {types.map((t) => <option key={t}>{t}</option>)}
                         </select>
                         {fieldErr('type')}
                     </div>

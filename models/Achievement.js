@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
+// Факт получения достижения. Название и категория не дублируются здесь —
+// они берутся из каталога AchievementTypes (PostgreSQL) по коду.
 const achievementSchema = new mongoose.Schema({
     userId:   { type: String, required: true, index: true },
     code:     { type: String, required: true },
-    title:    { type: String, required: true },
-    category: { type: String, enum: ['steps', 'calories', 'streak', 'type'], required: true },
     earnedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 

@@ -7,6 +7,7 @@ const UserProfile = require('../models/UserProfile');
 const WeightEntry = require('../models/WeightEntry');
 const Achievement = require('../models/Achievement');
 const { recomputeStats, ymd } = require('../services/statsService');
+const { enrich: enrichAchievements } = require('../services/achievementCatalog');
 const { cacheGet, cacheSet } = require('../db/redis');
 
 function pct(value, goal) {
@@ -60,7 +61,8 @@ router.get('/summary', async (req, res, next) => {
         }
 
         const goals = stats.goals || { dailySteps: 10000, dailyCalories: 500 };
-        const achievements = await Achievement.find({ userId: String(userId) });
+        const earned = await Achievement.find({ userId: String(userId) });
+        const achievements = await enrichAchievements(earned);
 
         res.json({
             data: {

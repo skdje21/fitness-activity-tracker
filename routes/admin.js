@@ -6,6 +6,7 @@ const { sequelize, User, Activity } = require('../models');
 const UserProfile = require('../models/UserProfile');
 const WeightEntry = require('../models/WeightEntry');
 const Achievement = require('../models/Achievement');
+const { enrich: enrichAchievements } = require('../services/achievementCatalog');
 const DailyStat = require('../models/DailyStat');
 const AdminLog = require('../models/AdminLog');
 const { cacheDel } = require('../db/redis');
@@ -209,7 +210,8 @@ router.get('/users/:id', async (req, res, next) => {
         let profile = null, achievements = [], weights = [];
         try {
             profile = await UserProfile.findOne({ userId: uid }).lean();
-            achievements = await Achievement.find({ userId: uid }).lean();
+            const earned = await Achievement.find({ userId: uid }).lean();
+            achievements = await enrichAchievements(earned);
             weights = await WeightEntry.find({ userId: uid }).sort({ date: -1 }).limit(30).lean();
         } catch { /* Mongo недоступна — отдаём то, что есть */ }
 

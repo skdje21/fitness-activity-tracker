@@ -4,6 +4,7 @@ const UserProfile = require('../models/UserProfile');
 const Achievement = require('../models/Achievement');
 const DailyStat = require('../models/DailyStat');
 const WeightEntry = require('../models/WeightEntry');
+const { enrich: enrichAchievements } = require('../services/achievementCatalog');
 
 // ==================== UserProfile ====================
 
@@ -55,9 +56,11 @@ router.delete('/stats/:id', async (req, res, next) => {
 
 router.get('/achievements', async (req, res, next) => {
     try {
-        const filter = { userId: String(req.user.id) };
-        if (req.query.category) filter.category = req.query.category;
-        const items = await Achievement.find(filter).sort({ earnedAt: -1 });
+        // Факт получения в Mongo — только { userId, code, earnedAt };
+        // название и категорию подмешиваем из каталога (PostgreSQL).
+        const earned = await Achievement.find({ userId: String(req.user.id) });
+        let items = await enrichAchievements(earned);
+        if (req.query.category) items = items.filter((a) => a.category === req.query.category);
         res.json({ data: items, meta: { total: items.length } });
     } catch (err) { next(err); }
 });

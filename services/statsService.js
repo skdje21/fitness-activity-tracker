@@ -4,6 +4,7 @@ const { Activity } = require('../models');
 const UserProfile = require('../models/UserProfile');
 const Achievement = require('../models/Achievement');
 const DailyStat = require('../models/DailyStat');
+const { qualifyingCodes } = require('./achievementCatalog');
 
 function ymd(value) {
     const d = new Date(value);
@@ -12,43 +13,6 @@ function ymd(value) {
 }
 function dayDiff(a, b) {
     return Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
-}
-
-// Правила достижений
-function buildAchievements(m, prevEarned) {
-    const defs = [
-        // Начало пути
-        { code: 'first_activity', title: 'Первая активность', category: 'type', when: m.sessions >= 1 },
-        { code: 'sessions_10', title: '10 тренировок', category: 'type', when: m.sessions >= 10 },
-        { code: 'sessions_50', title: '50 тренировок', category: 'type', when: m.sessions >= 50 },
-        { code: 'sessions_100', title: '100 тренировок', category: 'type', when: m.sessions >= 100 },
-        // Шаги
-        { code: 'steps_5k_day', title: '5 000 шагов за день', category: 'steps', when: m.maxStepsPerDay >= 5000 },
-        { code: 'steps_10k_day', title: '10 000 шагов за день', category: 'steps', when: m.maxStepsPerDay >= 10000 },
-        { code: 'steps_20k_day', title: '20 000 шагов за день', category: 'steps', when: m.maxStepsPerDay >= 20000 },
-        { code: 'steps_50k_total', title: '50 000 шагов суммарно', category: 'steps', when: m.steps >= 50000 },
-        { code: 'steps_100k_total', title: '100 000 шагов суммарно', category: 'steps', when: m.steps >= 100000 },
-        { code: 'steps_500k_total', title: '500 000 шагов суммарно', category: 'steps', when: m.steps >= 500000 },
-        { code: 'steps_1m_total', title: '1 000 000 шагов суммарно', category: 'steps', when: m.steps >= 1000000 },
-        // Калории
-        { code: 'calories_1k_total', title: '1 000 калорий суммарно', category: 'calories', when: m.calories >= 1000 },
-        { code: 'calories_10k_total', title: '10 000 калорий суммарно', category: 'calories', when: m.calories >= 10000 },
-        { code: 'calories_50k_total', title: '50 000 калорий суммарно', category: 'calories', when: m.calories >= 50000 },
-        // Серии
-        { code: 'streak_3', title: '3 дня подряд', category: 'streak', when: m.longestStreak >= 3 },
-        { code: 'streak_7', title: '7 дней подряд', category: 'streak', when: m.longestStreak >= 7 },
-        { code: 'streak_14', title: '14 дней подряд', category: 'streak', when: m.longestStreak >= 14 },
-        { code: 'streak_30', title: '30 дней подряд', category: 'streak', when: m.longestStreak >= 30 },
-        // Разнообразие
-        { code: 'multisport', title: '3 вида активности', category: 'type', when: m.typeCount >= 3 },
-        { code: 'multisport_4', title: '4 вида активности', category: 'type', when: m.typeCount >= 4 },
-    ];
-    return defs.filter((d) => d.when).map((d) => ({
-        code: d.code,
-        title: d.title,
-        category: d.category,
-        earnedAt: prevEarned[d.code] || new Date(),
-    }));
 }
 
 async function recomputeStats(userId) {
@@ -125,24 +89,30 @@ async function recomputeStats(userId) {
     }
     await doc.save();
 
-    // --- Achievements (отдельная коллекция) ---
+    // --- Achievements ---
+    // Факт получения (code + earnedAt) хранится в MongoDB, а правила и названия —
+    // в каталоге AchievementTypes (PostgreSQL). Какие коды заслужены, решает каталог.
     const existingAch = await Achievement.find({ userId: uid });
     const prevEarned = {};
     for (const a of existingAch) prevEarned[a.code] = a.earnedAt;
 
-    const newAchievements = buildAchievements(
-        { sessions: acts.length, steps, calories, maxStepsPerDay: maxSteps.value, longestStreak: longest, typeCount: byType.length },
-        prevEarned
-    );
+    const metrics = {
+        sessions: acts.length,
+        steps,
+        calories,
+        maxStepsPerDay: maxSteps.value,
+        longestStreak: longest,
+        typeCount: byType.length,
+    };
+    const activeCodes = await qualifyingCodes(metrics);
 
-    for (const ach of newAchievements) {
+    for (const code of activeCodes) {
         await Achievement.findOneAndUpdate(
-            { userId: uid, code: ach.code },
-            { $setOnInsert: { userId: uid, ...ach } },
+            { userId: uid, code },
+            { $setOnInsert: { userId: uid, code, earnedAt: prevEarned[code] || new Date() } },
             { upsert: true }
         );
     }
-    const activeCodes = newAchievements.map(a => a.code);
     await Achievement.deleteMany({ userId: uid, code: { $nin: activeCodes } });
 
     // --- DailyStats (отдельная коллекция) ---
